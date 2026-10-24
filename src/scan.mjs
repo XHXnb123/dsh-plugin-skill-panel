@@ -16,7 +16,7 @@ function decodeTildes(text) {
 
 /**
  * 把 DSH 会话目录名还原成候选工作区路径。
- * `--D-mynote-xhxnb-note--` -> `D:\mynote\xhxnb-note`；解码后仍需存在性校验。
+ * `--D-notes-vault--` -> `D:\notes\vault`；解码后仍需存在性校验。
  */
 export function decodeSessionDir(dirName) {
   const inner = dirName.replace(/^--/, "").replace(/--$/, "");
