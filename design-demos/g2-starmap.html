@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>蛛网二 · 星图（天文图录）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#07090E;font-family:"Noto Serif SC",serif}
+  .panel{position:relative;width:430px;height:620px;overflow:hidden;border-radius:14px;
+    background:radial-gradient(120% 90% at 50% 28%,#0F1A2C 0%,#0A1220 52%,#06090F 100%);
+    border:1px solid #C9A22733;box-shadow:0 24px 60px #000c}
+  .panel::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(90% 70% at 50% 45%,transparent 55%,#04060B99 100%)}
+  .bar{position:absolute;left:0;right:0;top:0;z-index:5;display:flex;align-items:center;gap:8px;padding:13px 14px 10px;
+    background:linear-gradient(#0A1220 55%,#0A122000)}
+  .bar .q{flex:1;display:flex;align-items:center;gap:8px;border-bottom:1px solid #C9A22766;padding:5px 2px 6px;color:#8C8779}
+  .bar .q svg{width:13px;height:13px;flex:none;opacity:.7}
+  .bar .q input{flex:1;min-width:0;background:none;border:0;outline:none;color:#EDE6D4;
+    font:400 12.5px "Noto Serif SC",serif;letter-spacing:.02em}
+  .bar .n{font:500 10.5px "JetBrains Mono",monospace;color:#9A8F6E;letter-spacing:.1em;flex:none}
+  .wrap{position:absolute;inset:0}
+  .wrap svg{position:absolute;inset:0;width:100%;height:100%}
+  .dial{fill:none;stroke:#C9A227;opacity:.16}
+  .tick{stroke:#C9A227;opacity:.3;stroke-width:1}
+  .arc{fill:none;stroke:#C9A227;stroke-width:.8;opacity:.5}
+  .arc.dim{opacity:.12}
+  .arc.hi{opacity:1;stroke-width:1.2}
+  .node{cursor:pointer}
+  .glow{opacity:0;transition:opacity .18s}
+  .node:hover .glow,.node.sel .glow{opacity:.55}
+  .core{transition:r .15s}
+  .lbl{font:400 11px "Noto Serif SC",serif;fill:#E4DCC6;paint-order:stroke;stroke:#0A1220;stroke-width:3px;
+    pointer-events:none;opacity:0;transition:opacity .12s;letter-spacing:.02em}
+  .lbl.show{opacity:1}
+  .cnst{font:500 12px "JetBrains Mono",monospace;fill:#9A8F6E;letter-spacing:.16em;paint-order:stroke;stroke:#0A1220;stroke-width:3px}
+  .tip{position:absolute;z-index:6;left:12px;right:12px;bottom:12px;background:#0E1725;border:1px solid #C9A22744;
+    border-radius:10px;padding:10px 12px;box-shadow:0 12px 30px #0009;display:none}
+  .tip.on{display:block}
+  .tip .t{display:flex;align-items:baseline;gap:8px}
+  .tip .t b{font:600 13px "Noto Serif SC",serif;color:#F3EEDC}
+  .tip .t i{font:500 9.5px "JetBrains Mono",monospace;color:#9A8F6E;font-style:normal;margin-left:auto;letter-spacing:.1em}
+  .tip p{margin:4px 0 9px;font-size:11.5px;line-height:1.55;color:#A9A392;max-height:34px;overflow:hidden}
+  .tip .acts{display:flex;gap:6px}
+  .tip button{font:400 11.5px "Noto Serif SC",serif;padding:5px 10px;border-radius:6px;border:1px solid #C9A22755;
+    background:#121D2E;color:#E4DCC6;cursor:pointer}
+  .tip button.pri{background:#C9A227;border-color:#C9A227;color:#0A1220}
+  .hint{position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:11px;color:#6E6754;z-index:4;letter-spacing:.1em}
+  .legend{position:absolute;left:14px;bottom:14px;z-index:4;display:none;gap:12px;font-size:10.5px;color:#9A8F6E}
+  .legend.on{display:flex}
+  .legend i{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:5px}
+</style>
+</head>
+<body>
+<div class="panel" id="panel">
+  <div class="bar">
+    <div class="q">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+      <input id="q" placeholder="搜索技能…" autocomplete="off">
+    </div>
+    <span class="n" id="cnt">19</span>
+  </div>
+  <div class="wrap" id="wrap"></div>
+  <div class="hint" id="hint">悬停查看 · 点击选中</div>
+  <div class="legend" id="legend">
+    <span><i style="background:#C9A227"></i>项目</span>
+    <span><i style="background:#E8E2D0"></i>用户</span>
+    <span><i style="background:#6FA8A0"></i>内置</span>
+  </div>
+  <div class="tip" id="tip">
+    <div class="t"><b id="tipname"></b><i id="tipsrc"></i></div>
+    <p id="tipdesc"></p>
+    <div class="acts"><button class="pri">执行</button><button>插入</button><button>看</button></div>
+  </div>
+</div>
+<script>
+const DATA = [
+  ["domain-modeling","Build and sharpen a project's domain model.","project"],
+  ["grill-me","A relentless interview to sharpen a plan or design.","project"],
+  ["grill-with-docs","An interview that also writes ADRs and a glossary.","project"],
+  ["grilling","Grill the user relentlessly about a plan, decision, or idea.","project"],
+  ["humanizer-yu","去除中文文本中的 AI 生成痕迹——西化句式、翻译腔。","project"],
+  ["natural-chinese","让中文读起来像人写的：自然中文写作与改写。","project"],
+  ["paper-humanizer","Academic text polisher and humanizer.","project"],
+  ["tencent-channel-community","腾讯频道社区管理：频道、成员、帖子、评论。","project"],
+  ["wechat-oa-style","采集公众号文章，产出证据化的文风总结。","project"],
+  ["huashu-design","花叔Design——用 HTML 做高保真原型、幻灯片、动画。","user"],
+  ["huashu-art-motion","艺术与视频动画：拆解复刻动画，36 种风格、9 种解说语法。","user"],
+  ["office","Create, edit, inspect, or convert Office documents.","bundled"],
+  ["office-docx","Create, read, edit, and validate Word documents.","bundled"],
+  ["office-export-pdf","Convert an Office document to a requested PDF.","bundled"],
+  ["office-pptx","Create, read, edit, and validate PowerPoint decks.","bundled"],
+  ["office-recalculate","Refresh spreadsheet formula caches.","bundled"],
+  ["office-render","Render document images or inspect visual layout.","bundled"],
+  ["office-xlsx","Read, create, edit, and validate Excel workbooks.","bundled"],
+  ["diagnose-windows-sandbox-acl","Diagnose unexpected DSH sandbox access denials on Windows.","bundled"]
+];
+const COLOR = { project:"#C9A227", user:"#E8E2D0", bundled:"#6FA8A0" };
+const LABEL = { project:"PROJECT", user:"USER", bundled:"BUNDLED" };
+const CN = { project:"项目", user:"用户", bundled:"内置" };
+const CX = 215, CY = 332;
+
+// 三个星座：各自占据一段方位角，节点落在同一半径的弧上
+const CNST = {
+  project: { from:-168, to:-36, r:186 },
+  user:    { from:-18,  to:34,  r:150 },
+  bundled: { from:52,   to:168, r:186 }
+};
+const R2D = Math.PI/180;
+
+function polar(r,deg){ return [CX+Math.cos(deg*R2D)*r, CY+Math.sin(deg*R2D)*r]; }
+
+const groups = { project:[], user:[], bundled:[] };
+DATA.forEach(([n,d,s])=>groups[s].push([n,d,s]));
+
+const nodes = [];
+Object.entries(CNST).forEach(([src,c])=>{
+  const arr = groups[src];
+  const span = c.to - c.from;
+  arr.forEach((item,i)=>{
+    const t = arr.length===1 ? 0.5 : i/(arr.length-1);
+    const deg = c.from + span*t;
+    const [x,y] = polar(c.r, deg);
+    nodes.push({ name:item[0], desc:item[1], src, x, y, deg });
+  });
+});
+
+// 极淡的辐条：圆心到每个节点，让盘面成网而不是三条孤立的轨
+nodes.forEach(n=>{
+  const l = document.createElementNS("http://www.w3.org/2000/svg","line");
+  l.setAttribute("x1",CX); l.setAttribute("y1",CY); l.setAttribute("x2",n.x); l.setAttribute("y2",n.y);
+  l.setAttribute("stroke","#C9A227"); l.setAttribute("stroke-width",".6"); l.setAttribute("opacity",".07");
+  document.getElementById("wrap").appendChild(l);
+});
+const wrap = document.getElementById("wrap");
+const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+svg.setAttribute("viewBox","0 0 430 620");
+svg.setAttribute("xmlns","http://www.w3.org/2000/svg");
+wrap.appendChild(svg);
+
+// 星盘：三层同心圆 + 每 15° 一条刻线
+[86,136,186,216].forEach(r=>{
+  const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  c.setAttribute("cx",CX); c.setAttribute("cy",CY); c.setAttribute("r",r);
+  c.setAttribute("class","dial"); svg.appendChild(c);
+});
+for(let deg=0; deg<360; deg+=15){
+  const big = deg%90===0;
+  const [x1,y1] = polar(206,deg), [x2,y2] = polar(big?218:212,deg);
+  const l = document.createElementNS("http://www.w3.org/2000/svg","line");
+  l.setAttribute("x1",x1); l.setAttribute("y1",y1); l.setAttribute("x2",x2); l.setAttribute("y2",y2);
+  l.setAttribute("class","tick"); l.setAttribute("opacity", big?"0.34":"0.16"); svg.appendChild(l);
+}
+// 十字准线
+[[CX-216,CY,CX+216,CY],[CX,CY-216,CX,CY+216]].forEach(([a,b,c,d])=>{
+  const l = document.createElementNS("http://www.w3.org/2000/svg","line");
+  l.setAttribute("x1",a); l.setAttribute("y1",b); l.setAttribute("x2",c); l.setAttribute("y2",d);
+  l.setAttribute("class","tick"); l.setAttribute("opacity","0.1"); svg.appendChild(l);
+});
+
+// 星座弧线：同组节点沿同一半径的圆弧串起来
+const arcEls = [];
+Object.entries(CNST).forEach(([src,c])=>{
+  const arr = nodes.filter(n=>n.src===src);
+  if(arr.length<2) return;
+  const degs = arr.map(n=>n.deg);
+  const a0 = Math.min(...degs), a1 = Math.max(...degs);
+  const [x0,y0] = polar(c.r,a0), [x1,y1] = polar(c.r,a1);
+  const large = (a1-a0) > 180 ? 1 : 0;
+  const p = document.createElementNS("http://www.w3.org/2000/svg","path");
+  p.setAttribute("d",`M${x0} ${y0} A${c.r} ${c.r} 0 ${large} 1 ${x1} ${y1}`);
+  p.setAttribute("class","arc");
+  p.dataset.src = src;
+  svg.appendChild(p); arcEls.push(p);
+  // 星座名标在弧线中点外侧
+  const mid = (a0+a1)/2;
+  const [tx,ty] = polar(c.r+30, mid);
+  const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+  t.setAttribute("x",tx); t.setAttribute("y",ty); t.setAttribute("text-anchor","middle");
+  t.setAttribute("class","cnst"); t.textContent = LABEL[src];
+  svg.appendChild(t);
+});
+
+// 中心：19 的刻度盘
+const core = document.createElementNS("http://www.w3.org/2000/svg","circle");
+core.setAttribute("cx",CX); core.setAttribute("cy",CY); core.setAttribute("r",30);
+core.setAttribute("fill","none"); core.setAttribute("stroke","#C9A227"); core.setAttribute("stroke-opacity",".28");
+svg.appendChild(core);
+const coreN = document.createElementNS("http://www.w3.org/2000/svg","text");
+coreN.setAttribute("x",CX); coreN.setAttribute("y",CY+1); coreN.setAttribute("text-anchor","middle");
+coreN.setAttribute("style","font:600 26px 'Noto Serif SC',serif;fill:#EDE6D4;letter-spacing:-.02em");
+coreN.textContent = "19";
+svg.appendChild(coreN);
+const coreT = document.createElementNS("http://www.w3.org/2000/svg","text");
+coreT.setAttribute("x",CX); coreT.setAttribute("y",CY+38); coreT.setAttribute("text-anchor","middle");
+coreT.setAttribute("style","font:400 9px 'JetBrains Mono',monospace;fill:#9A8F6E;letter-spacing:.3em");
+coreT.textContent = "SKILLS";
+svg.appendChild(coreT);
+
+// 节点：外层柔光 + 核心亮点
+const nodeEls = [];
+nodes.forEach((n,i)=>{
+  const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+  g.setAttribute("class","node"); g.dataset.i=i; g.setAttribute("style",`color:${COLOR[n.src]}`);
+  const glow = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  glow.setAttribute("cx",n.x); glow.setAttribute("cy",n.y); glow.setAttribute("r",11);
+  glow.setAttribute("fill",COLOR[n.src]); glow.setAttribute("class","glow");
+  glow.setAttribute("filter","url(#soft)"); g.appendChild(glow);
+  const ring = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  ring.setAttribute("cx",n.x); ring.setAttribute("cy",n.y); ring.setAttribute("r",5.4);
+  ring.setAttribute("fill","none"); ring.setAttribute("stroke",COLOR[n.src]); ring.setAttribute("stroke-opacity",".45");
+  g.appendChild(ring);
+  const dot = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  dot.setAttribute("cx",n.x); dot.setAttribute("cy",n.y); dot.setAttribute("r",2.7);
+  dot.setAttribute("fill",COLOR[n.src]); dot.setAttribute("class","core");
+  g.appendChild(dot);
+  svg.appendChild(g); nodeEls.push(g);
+});
+const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
+defs.innerHTML = `<filter id="soft" x="-200%" y="-200%" width="500%" height="500%">
+  <feGaussianBlur stdDeviation="4.2"/></filter>`;
+svg.insertBefore(defs, svg.firstChild);
+
+// 标签：放在节点的法线外侧（从圆心指向节点的方向）
+const labelEls = nodes.map(n=>{
+  const out = (n.deg*R2D);
+  const lx = n.x + Math.cos(out)*14, ly = n.y + Math.sin(out)*14 + 4;
+  const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+  t.setAttribute("class","lbl"); t.setAttribute("x",lx); t.setAttribute("y",ly);
+  t.setAttribute("text-anchor", Math.cos(out) > 0.25 ? "start" : Math.cos(out) < -0.25 ? "end" : "middle");
+  t.textContent = n.name; svg.appendChild(t); return t;
+});
+
+let sel = -1;
+const tip = document.getElementById("tip"), hint = document.getElementById("hint"), legend = document.getElementById("legend");
+
+function focus(i){
+  const src = nodes[i].src;
+  arcEls.forEach(p=>p.setAttribute("class","arc" + (p.dataset.src===src ? " hi" : " dim")));
+}
+function clearFocus(){ arcEls.forEach(p=>p.setAttribute("class","arc")); }
+function showTip(i){
+  const n = nodes[i];
+  document.getElementById("tipname").textContent = n.name;
+  document.getElementById("tipsrc").textContent = LABEL[n.src];
+  document.getElementById("tipdesc").textContent = n.desc;
+  tip.classList.add("on"); hint.style.display="none"; legend.classList.remove("on");
+}
+function hideTip(){ tip.classList.remove("on"); hint.style.display="block"; }
+
+nodeEls.forEach((g,i)=>{
+  g.addEventListener("mouseenter",()=>{ labelEls[i].classList.add("show"); focus(i); });
+  g.addEventListener("mouseleave",()=>{
+    if(sel!==i) labelEls[i].classList.remove("show");
+    if(sel===-1) clearFocus(); else focus(sel);
+  });
+  g.addEventListener("click",ev=>{
+    ev.stopPropagation();
+    nodeEls.forEach(x=>x.classList.remove("sel"));
+    labelEls.forEach(x=>x.classList.remove("show"));
+    if(sel===i){ sel=-1; hideTip(); clearFocus(); return; }
+    sel=i; g.classList.add("sel"); labelEls[i].classList.add("show"); focus(i); showTip(i);
+  });
+});
+
+document.getElementById("q").addEventListener("input",e=>{
+  const q = e.target.value.trim().toLowerCase();
+  let hit = 0;
+  nodes.forEach((n,i)=>{
+    const ok = !q || n.name.toLowerCase().includes(q) || n.desc.toLowerCase().includes(q);
+    nodeEls[i].style.opacity = ok ? 1 : .15;
+    if(q && ok){ labelEls[i].classList.add("show"); hit++; }
+    else if(!q && sel!==i) labelEls[i].classList.remove("show");
+  });
+  arcEls.forEach(p=>p.style.opacity = q ? .1 : "");
+  document.getElementById("cnt").textContent = q ? `${hit}/19` : "19";
+});
+
+document.getElementById("panel").addEventListener("click",()=>{
+  if(sel!==-1){
+    nodeEls[sel].classList.remove("sel"); labelEls[sel].classList.remove("show");
+    sel=-1; hideTip(); clearFocus();
+  }
+});
+</script>
+</body>
+</html>

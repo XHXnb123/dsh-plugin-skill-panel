@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>方向三 · 节气色谱 — 暖纸技能册</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:#101012;font-family:Inter,system-ui,sans-serif;display:grid;place-items:center;
+       background-image:radial-gradient(120% 80% at 80% 0%,#1a1a1e 0%,#101012 60%)}
+  .host{position:relative;width:1180px;height:760px;border-radius:12px;background:#141416;
+        box-shadow:0 40px 120px -40px #000,0 0 0 1px #ffffff0a;overflow:hidden}
+  .host .bar{height:46px;border-bottom:1px solid #ffffff0a;display:flex;align-items:center;gap:9px;padding:0 18px;color:#8A8A92;font-size:12.5px}
+  .host .dot{width:8px;height:8px;border-radius:50%;background:#2a2b31}
+  .host .ghost{position:absolute;left:34px;top:120px;width:560px;font-size:13px;line-height:1.9;color:#3a3b41}
+  .host .ghost .msg{background:#1b1c20;border-radius:10px;padding:12px 16px;width:fit-content;color:#54565e}
+
+  /* ---------- 暖纸技能册 ---------- */
+  .panel{position:absolute;right:22px;bottom:22px;width:430px;height:620px;background:#F4EFE4;color:#1A1A1A;
+         box-shadow:0 30px 80px -20px #000e,0 0 0 1px #ffffff1a;
+         display:flex;flex-direction:column;overflow:hidden}
+  .p-head{padding:14px 18px 0}
+  .p-title{display:flex;align-items:flex-start;justify-content:space-between}
+  .p-title h1{margin:0;font:900 30px/1 "Noto Serif SC",serif;letter-spacing:.02em}
+  .p-title .cnt{font:400 11px/1.5 "Noto Sans SC";color:#6B6357;text-align:right;letter-spacing:.04em}
+  .p-title .cnt b{display:block;font:600 15px/1.2 "Noto Serif SC";color:#1A1A1A}
+  .p-rule{height:1px;background:#1A1A1A;margin:9px 0 0}
+  .p-search{margin:9px 0 6px;border:1px solid #C9BFA9;background:#FAF6EE;padding:5px 8px;
+            display:flex;align-items:center;gap:7px;font:400 11px/1.3 "Noto Sans SC";color:#6B6357}
+  .p-search .cur{width:1px;height:11px;background:#C0392B}
+  .p-body{flex:1;overflow:hidden}
+  .p-grp{display:flex;align-items:baseline;gap:7px;padding:8px 18px 3px}
+  .p-grp b{font:700 11.5px/1.2 "Noto Sans SC";letter-spacing:.06em}
+  .p-grp span{font:400 11px/1.2 "JetBrains Mono";color:#6B6357;letter-spacing:.04em}
+  .p-row{display:flex;align-items:center;gap:10px;padding:5px 18px;border-bottom:1px solid #E2DACA}
+  .p-row:hover,.p-row.on{background:#FAF6EE}
+  .p-row.on .p-main span{color:#57503F}
+  
+  .p-main{min-width:0;flex:1}
+  .p-main b{display:block;font:700 13px/1.3 Inter,"Noto Sans SC";letter-spacing:-.01em}
+  .p-main span{display:block;font:400 12px/1.35 "Noto Sans SC";color:#6B6357;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .p-acts{display:flex;gap:3px;visibility:hidden}
+  .p-row:hover .p-acts,.p-row.on .p-acts{visibility:visible}
+  .p-acts button{font:500 11px/1 "Noto Sans SC";padding:3px 6px;border:1px solid #1A1A1A;background:#FBF6EC;color:#1A1A1A;cursor:pointer}
+  .p-acts button.pri{background:#C0392B;border-color:#C0392B;color:#FBF7EE}
+  /* 底部节气式色带导航 */
+  .p-bands{display:flex;align-items:flex-end;height:44px;border-top:1px solid #1A1A1A}
+  .band{flex:1;height:28px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px;
+        font:500 9px/1.1 "Noto Sans SC";color:#fff9;transition:flex .18s,height .18s}
+  .band b{font:700 11px/1.1 "Noto Sans SC";color:#fff;letter-spacing:.05em}
+  .band.proj{background:#B07B4F}
+  .band.user{background:#8E9A5E}
+  .band.bund{background:#3E5C78}
+  .band.on{flex:2.1;height:44px;background:#C0392B}
+</style>
+</head>
+<body>
+<div class="host">
+  <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span style="margin-left:8px">xhxnb-note — DeepSeek Harness</span></div>
+<div class="panel">
+    <div class="p-head">
+      <div class="p-title"><h1>技能</h1>
+        <div class="cnt"><b>19</b>项目 9　用户 2　内置 8</div>
+      </div>
+      <div class="p-rule"></div>
+      <div class="p-search"><span>搜索技能</span><i class="cur"></i></div>
+    </div>
+    <div class="p-body" id="list"></div>
+    <div class="p-bands">
+      <div class="band proj on"><b>项目</b>9</div>
+      <div class="band user"><b>用户</b>2</div>
+      <div class="band bund"><b>内置</b>8</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  ['domain-modeling','Build and sharpen a project\u2019s domain model.','project'],
+  ['grill-me','A relentless interview to sharpen a plan or design.','project'],
+  ['grill-with-docs','An interview that also writes ADRs and a glossary.','project'],
+  ['grilling','Grill the user relentlessly about a plan, decision, or idea.','project'],
+  ['humanizer-yu','去除中文文本中的 AI 生成痕迹——西化句式、翻译腔。','project'],
+  ['natural-chinese','让中文读起来像人写的：自然中文写作与改写。','project'],
+  ['paper-humanizer','Academic text polisher and humanizer.','project'],
+  ['tencent-channel-community','腾讯频道社区管理：频道、成员、帖子、评论。','project'],
+  ['wechat-oa-style','采集公众号文章，产出证据化的文风总结。','project'],
+  ['huashu-design','花叔Design——用 HTML 做高保真原型、幻灯片、动画。','user'],
+  ['huashu-art-motion','艺术与视频动画：拆解复刻动画，36 种风格、9 种解说语法。','user'],
+  ['office','Create, edit, inspect, or convert Office documents.','bundled'],
+  ['office-docx','Create, read, edit, and validate Word documents.','bundled'],
+  ['office-export-pdf','Convert an Office document to a requested PDF.','bundled'],
+  ['office-pptx','Create, read, edit, and validate PowerPoint decks.','bundled'],
+  ['office-recalculate','Refresh spreadsheet formula caches.','bundled'],
+  ['office-render','Render document images or inspect visual layout.','bundled'],
+  ['office-xlsx','Read, create, edit, and validate Excel workbooks.','bundled'],
+  ['diagnose-windows-sandbox-acl','Use on Windows for unexpected DSH sandbox denials.','bundled']
+];
+const GRP = { project:'项目', user:'用户', bundled:'内置' };
+const SUB = { project:'9', user:'2', bundled:'8' };
+const list = document.getElementById('list');
+let html = '', last = null;
+for (const [name, desc, src] of DATA) {
+  if (src !== last) { html += `<div class="p-grp"><b>${GRP[src]}</b><span>${SUB[src]}</span></div>`; last = src; }
+  html += `<div class="p-row${name==='huashu-design'?' on':''}">
+    <div class="p-main"><b>${name}</b><span>${desc}</span></div>
+    <div class="p-acts"><button class="pri">执行</button><button>插入</button><button>看</button></div>
+  </div>`;
+}
+list.innerHTML = html;
+</script>
+</body>
+</html>

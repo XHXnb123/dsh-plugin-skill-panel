@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>蛛网三 · 径向分支（思维导图／线路图）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#E9E7E1;font-family:Inter,"Noto Sans SC",sans-serif}
+  .panel{position:relative;width:430px;height:620px;background:#FBFAF7;border-radius:14px;overflow:hidden;
+    border:1px solid #00000014;box-shadow:0 24px 60px #1a1a1a22}
+  .bar{position:absolute;left:0;right:0;top:0;z-index:5;display:flex;align-items:center;gap:8px;padding:12px 14px 10px;
+    background:linear-gradient(#FBFAF7 60%,#FBFAF700)}
+  .bar .q{flex:1;display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #0000001f;border-radius:8px;padding:6px 9px;color:#8A8A85}
+  .bar .q svg{width:13px;height:13px;flex:none}
+  .bar .q input{flex:1;min-width:0;background:none;border:0;outline:none;color:#1F2328;font:400 12.5px Inter,"Noto Sans SC"}
+  .bar .n{font:500 10.5px Inter,"Noto Sans SC";color:#8A8A85;flex:none}
+  .wrap{position:absolute;inset:0}
+  .wrap svg{position:absolute;inset:0;width:100%;height:100%}
+  .trunk{fill:none;stroke-width:2.6;stroke-linecap:round;transition:opacity .15s}
+  .branch{fill:none;stroke-width:1.1;opacity:.55;transition:opacity .15s,stroke-width .15s}
+  .branch.hi{opacity:1;stroke-width:1.8}
+  .branch.dim,.trunk.dim{opacity:.12}
+  .node{cursor:pointer}
+  .node circle{fill:#FBFAF7;stroke-width:2.2;transition:r .15s}
+  .node:hover circle,.node.sel circle{r:6.4}
+  .lbl{font:400 10.5px Inter,"Noto Sans SC";fill:#3A3F45;paint-order:stroke;stroke:#FBFAF7;stroke-width:2.6;
+    pointer-events:none;opacity:0;transition:opacity .12s}
+  .lbl.show{opacity:1}
+  .root circle{fill:#1F2328;stroke:none}
+  .roottxt{font:600 20px Inter;fill:#FBFAF7}
+  .glabel{font:600 10px Inter,"Noto Sans SC";letter-spacing:.1em;paint-order:stroke;stroke:#FBFAF7;stroke-width:3px}
+  .tip{position:absolute;z-index:6;left:12px;right:12px;bottom:12px;background:#fff;border:1px solid #0000001f;
+    border-radius:10px;padding:10px 12px;box-shadow:0 12px 30px #0003;display:none}
+  .tip.on{display:block}
+  .tip .t{display:flex;align-items:baseline;gap:8px}
+  .tip .t b{font:600 13px Inter,"Noto Sans SC";color:#111418;letter-spacing:-.01em}
+  .tip .t i{font:500 9.5px Inter,"Noto Sans SC";color:#8A8A85;font-style:normal;margin-left:auto}
+  .tip p{margin:4px 0 9px;font-size:11.5px;line-height:1.5;color:#5A6068;max-height:34px;overflow:hidden}
+  .tip .acts{display:flex;gap:6px}
+  .tip button{font:500 11px Inter,"Noto Sans SC";padding:5px 10px;border-radius:6px;border:1px solid #00000024;
+    background:#F2F1ED;color:#2B3036;cursor:pointer}
+  .tip button.pri{background:#2B3036;border-color:#2B3036;color:#fff}
+  .hint{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:11px;color:#9A9A94;z-index:4}
+</style>
+</head>
+<body>
+<div class="panel" id="panel">
+  <div class="bar">
+    <div class="q">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+      <input id="q" placeholder="搜索技能…" autocomplete="off">
+    </div>
+    <span class="n" id="cnt">19 项</span>
+  </div>
+  <div class="wrap" id="wrap"></div>
+  <div class="hint" id="hint">悬停查看 · 点击选中</div>
+  <div class="tip" id="tip">
+    <div class="t"><b id="tipname"></b><i id="tipsrc"></i></div>
+    <p id="tipdesc"></p>
+    <div class="acts"><button class="pri">执行</button><button>插入</button><button>看</button></div>
+  </div>
+</div>
+<script>
+const DATA = [
+  ["domain-modeling","Build and sharpen a project's domain model.","project"],
+  ["grill-me","A relentless interview to sharpen a plan or design.","project"],
+  ["grill-with-docs","An interview that also writes ADRs and a glossary.","project"],
+  ["grilling","Grill the user relentlessly about a plan, decision, or idea.","project"],
+  ["humanizer-yu","去除中文文本中的 AI 生成痕迹——西化句式、翻译腔。","project"],
+  ["natural-chinese","让中文读起来像人写的：自然中文写作与改写。","project"],
+  ["paper-humanizer","Academic text polisher and humanizer.","project"],
+  ["tencent-channel-community","腾讯频道社区管理：频道、成员、帖子、评论。","project"],
+  ["wechat-oa-style","采集公众号文章，产出证据化的文风总结。","project"],
+  ["huashu-design","花叔Design——用 HTML 做高保真原型、幻灯片、动画。","user"],
+  ["huashu-art-motion","艺术与视频动画：拆解复刻动画，36 种风格、9 种解说语法。","user"],
+  ["office","Create, edit, inspect, or convert Office documents.","bundled"],
+  ["office-docx","Create, read, edit, and validate Word documents.","bundled"],
+  ["office-export-pdf","Convert an Office document to a requested PDF.","bundled"],
+  ["office-pptx","Create, read, edit, and validate PowerPoint decks.","bundled"],
+  ["office-recalculate","Refresh spreadsheet formula caches.","bundled"],
+  ["office-render","Render document images or inspect visual layout.","bundled"],
+  ["office-xlsx","Read, create, edit, and validate Excel workbooks.","bundled"],
+  ["diagnose-windows-sandbox-acl","Diagnose unexpected DSH sandbox access denials on Windows.","bundled"]
+];
+const COLOR = { project:"#2B6CB0", user:"#2F855A", bundled:"#C05621" };
+const CN = { project:"项目", user:"用户", bundled:"内置" };
+const CX = 215, CY = 372;
+const R2D = Math.PI/180;
+const polar = (r,deg)=>[CX+Math.cos(deg*R2D)*r, CY+Math.sin(deg*R2D)*r];
+
+// 三条主枝各自占一段方位角
+const ARM = {
+  project: { mid:-90, from:-142, to:-38, r:166, hubR:98 },
+  user:    { mid:26,  from:8,    to:46,  r:158, hubR:86  },
+  bundled: { mid:148, from:108,  to:190, r:166, hubR:98 }
+};
+const groups = { project:[], user:[], bundled:[] };
+DATA.forEach(([n,d,s])=>groups[s].push([n,d,s]));
+
+const nodes = [];
+Object.entries(ARM).forEach(([src,a])=>{
+  const arr = groups[src];
+  const span = a.to - a.from;
+  arr.forEach((item,i)=>{
+    const t = arr.length===1 ? 0.5 : i/(arr.length-1);
+    const deg = a.from + span*t;
+    const [x,y] = polar(a.r, deg);
+    nodes.push({ name:item[0], desc:item[1], src, x, y, deg, arm:a });
+  });
+});
+
+const wrap = document.getElementById("wrap");
+const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+svg.setAttribute("viewBox","0 0 430 620"); wrap.appendChild(svg);
+
+// 主枝：从根到枝杈点，再分叉到每片叶
+const trunkEls = [], branchEls = [];
+Object.entries(ARM).forEach(([src,a])=>{
+  const c = document.createElementNS("http://www.w3.org/2000/svg","path");
+  const [hx,hy] = polar(a.hubR, a.mid);
+  const mx = (CX+hx)/2 + Math.cos(a.mid*R2D)*6;
+  const my = (CY+hy)/2 + Math.sin(a.mid*R2D)*6;
+  c.setAttribute("d",`M${CX} ${CY} Q${mx.toFixed(1)} ${my.toFixed(1)} ${hx.toFixed(1)} ${hy.toFixed(1)}`);
+  c.setAttribute("class","trunk"); c.setAttribute("stroke",COLOR[src]);
+  svg.appendChild(c); trunkEls.push(c);
+  // 枝名
+  const [gx,gy] = polar(a.hubR*0.72, a.mid);
+  const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+  t.setAttribute("x",gx); t.setAttribute("y",gy+3); t.setAttribute("text-anchor","middle");
+  t.setAttribute("class","glabel"); t.setAttribute("fill",COLOR[src]);
+  t.textContent = CN[src]; svg.appendChild(t);
+
+  nodes.filter(n=>n.src===src).forEach(n=>{
+    const [x0,y0] = polar(a.hubR, a.mid);
+    const cxp = (x0+n.x)/2, cyp = (y0+n.y)/2;
+    const p = document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",`M${x0.toFixed(1)} ${y0.toFixed(1)} Q${cxp.toFixed(1)} ${cyp.toFixed(1)} ${n.x.toFixed(1)} ${n.y.toFixed(1)}`);
+    p.setAttribute("class","branch"); p.setAttribute("stroke",COLOR[src]);
+    p.dataset.src = src;
+    svg.appendChild(p); branchEls.push(p);
+  });
+});
+
+// 根
+const rootG = document.createElementNS("http://www.w3.org/2000/svg","g");
+rootG.setAttribute("class","root");
+const rc = document.createElementNS("http://www.w3.org/2000/svg","circle");
+rc.setAttribute("cx",CX); rc.setAttribute("cy",CY); rc.setAttribute("r",17);
+rootG.appendChild(rc);
+svg.appendChild(rootG);
+const rt = document.createElementNS("http://www.w3.org/2000/svg","text");
+rt.setAttribute("x",CX); rt.setAttribute("y",CY+6); rt.setAttribute("text-anchor","middle");
+rt.setAttribute("class","roottxt"); rt.textContent="19"; svg.appendChild(rt);
+
+// 叶节点
+const nodeEls = [];
+nodes.forEach((n,i)=>{
+  const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+  g.setAttribute("class","node"); g.dataset.i=i;
+  const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  c.setAttribute("cx",n.x); c.setAttribute("cy",n.y); c.setAttribute("r",5);
+  c.setAttribute("stroke",COLOR[n.src]); g.appendChild(c);
+  svg.appendChild(g); nodeEls.push(g);
+});
+
+// 叶标签沿径向朝外
+const labelEls = nodes.map(n=>{
+  const [lx,ly] = polar(n.arm.r+15, n.deg);
+  const c = Math.cos(n.deg*R2D);
+  const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+  t.setAttribute("class","lbl"); t.setAttribute("x",lx); t.setAttribute("y",ly+3.5);
+  t.setAttribute("text-anchor", c>0.3 ? "start" : c<-0.3 ? "end" : "middle");
+  t.textContent = n.name; svg.appendChild(t); return t;
+});
+
+let sel=-1;
+const tip=document.getElementById("tip"), hint=document.getElementById("hint");
+
+function focus(i){
+  const src = nodes[i].src;
+  branchEls.forEach(p=>p.setAttribute("class","branch"+(p.dataset.src===src?" hi":" dim")));
+  trunkEls.forEach((p,ti)=>{
+    const key = Object.keys(ARM)[ti];
+    p.setAttribute("class","trunk"+(key===src?"":" dim"));
+  });
+}
+function clearFocus(){
+  branchEls.forEach(p=>p.setAttribute("class","branch"));
+  trunkEls.forEach(p=>p.setAttribute("class","trunk"));
+}
+function showTip(i){
+  const n=nodes[i];
+  document.getElementById("tipname").textContent=n.name;
+  document.getElementById("tipsrc").textContent=CN[n.src];
+  document.getElementById("tipdesc").textContent=n.desc;
+  tip.classList.add("on"); hint.style.display="none";
+}
+function hideTip(){ tip.classList.remove("on"); hint.style.display="block"; }
+
+nodeEls.forEach((g,i)=>{
+  g.addEventListener("mouseenter",()=>{ labelEls[i].classList.add("show"); focus(i); });
+  g.addEventListener("mouseleave",()=>{
+    if(sel!==i) labelEls[i].classList.remove("show");
+    if(sel===-1) clearFocus(); else focus(sel);
+  });
+  g.addEventListener("click",ev=>{
+    ev.stopPropagation();
+    nodeEls.forEach(x=>x.classList.remove("sel"));
+    labelEls.forEach(x=>x.classList.remove("show"));
+    if(sel===i){ sel=-1; hideTip(); clearFocus(); return; }
+    sel=i; g.classList.add("sel"); labelEls[i].classList.add("show"); focus(i); showTip(i);
+  });
+});
+
+document.getElementById("q").addEventListener("input",e=>{
+  const q=e.target.value.trim().toLowerCase();
+  let hit=0;
+  nodes.forEach((n,i)=>{
+    const ok = !q || n.name.toLowerCase().includes(q) || n.desc.toLowerCase().includes(q);
+    nodeEls[i].style.opacity = ok?1:.15;
+    if(q&&ok){ labelEls[i].classList.add("show"); hit++; }
+    else if(!q&&sel!==i) labelEls[i].classList.remove("show");
+  });
+  document.getElementById("cnt").textContent = q?`${hit}/19 项`:"19 项";
+});
+
+document.getElementById("panel").addEventListener("click",()=>{
+  if(sel!==-1){
+    nodeEls[sel].classList.remove("sel"); labelEls[sel].classList.remove("show");
+    sel=-1; hideTip(); clearFocus();
+  }
+});
+</script>
+</body>
+</html>

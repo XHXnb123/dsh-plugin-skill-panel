@@ -1,0 +1,12 @@
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+*.log
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+
+# 开发时从真实 GUI 截的图（含宿主界面），不进仓库
+shot-*.png
+assets/

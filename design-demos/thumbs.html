@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Skill Panel · 六方向缩略图</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@400;600;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#141416;color:#eee;font-family:Inter,system-ui,sans-serif;padding:28px}
+  h1{font:600 15px/1.3 Inter;margin:0 0 4px;color:#ddd}
+  .sub{font-size:12px;color:#77787e;margin-bottom:20px}
+  .grid{display:grid;grid-template-columns:repeat(3,480px);gap:22px}
+  figure{margin:0}
+  figcaption{font:500 11.5px/1.4 Inter;color:#9a9ba2;margin-bottom:7px;display:flex;gap:8px;align-items:baseline}
+  figcaption b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:4px;background:#2b2c31;color:#e8e8ec;font:700 10.5px Inter}
+  figcaption em{font-style:normal;color:#62646b}
+  .frame{width:480px;height:300px;overflow:hidden;border-radius:3px;box-shadow:0 18px 40px -18px #000a,0 0 0 1px #ffffff0d}
+  .panel{width:430px;height:300px;overflow:hidden}
+
+  /* ---------- A · Rasmus Andersson ---------- */
+  .pa{background:#0E0E10;color:#EDEDED;font:400 13px/1.4 Inter,system-ui}
+  .pa .search{padding:15px 16px 13px;border-bottom:1px solid #26262A;color:#6E6E74;font-size:12px}
+  .pa .grp{padding:13px 16px 5px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#5A5A60}
+  .pa .row{padding:8px 16px;border-left:2px solid transparent}
+  .pa .row b{font-weight:500;font-size:13px;display:block;letter-spacing:-.01em}
+  .pa .row span{color:#7E7E86;font-size:11px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pa .row.on{border-left-color:#4C8DFF;background:#121215}
+
+  /* ---------- B · Experimental Jetset ---------- */
+  .pb{background:#FAFAF7;color:#111;font:400 12px/1.3 Inter}
+  .pb .grpbar{background:#111;color:#FAFAF7;padding:5px 10px;font:700 9.5px/1.2 Inter;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between}
+  .pb .row{display:grid;grid-template-columns:30px 1fr;gap:8px;padding:7px 10px;border-bottom:1px solid #111}
+  .pb .idx{font:500 9.5px/1.6 "JetBrains Mono",monospace}
+  .pb b{font-weight:800;font-size:12px;letter-spacing:-.02em;display:block}
+  .pb p{margin:1px 0 0;font-size:10px;line-height:1.25;color:#3B3B3B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- C · Raycast ---------- */
+  .pc{background:#17171A;color:#F2F2F2;font:400 13px/1.35 Inter}
+  .pc .searchbox{margin:9px 9px 4px;padding:8px 10px;background:#202024;border-radius:8px;display:flex;justify-content:space-between;align-items:center;color:#8A8A90;font-size:12px}
+  .pc .kbd{font:500 9.5px "JetBrains Mono";background:#2C2C32;color:#A8A8B0;padding:1px 5px;border-radius:4px}
+  .pc .grp{padding:9px 14px 3px;font-size:10px;color:#75757D;letter-spacing:.02em}
+  .pc .row{display:flex;gap:10px;align-items:center;padding:6px 8px;margin:0 5px;border-radius:6px}
+  .pc .ico{width:23px;height:23px;border-radius:5px;background:#2A2A31;color:#B9B9C2;display:grid;place-items:center;font:600 10px "JetBrains Mono";flex:none}
+  .pc b{font-weight:500;font-size:12.5px;display:block;letter-spacing:-.01em}
+  .pc span{display:block;font-size:10.5px;color:#85858C;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pc .row.on{background:#26262C}
+
+  /* ---------- D · Linear ---------- */
+  .pd{background:#08090A;color:#E6E6E8;font:400 13px/1.35 Inter}
+  .pd .top{padding:11px 12px 6px;font-size:11px;color:#7C7F88}
+  .pd .row{margin:0 8px 5px;padding:7px 9px;border:1px solid #1B1C20;border-radius:6px;display:flex;gap:8px;align-items:center;background:#0C0D0F}
+  .pd .dot{width:5px;height:5px;border-radius:50%;background:#5E6AD2;flex:none}
+  .pd b{font-weight:500;font-size:12px;display:block}
+  .pd span{display:block;font-size:10px;color:#7C7F88;max-width:255px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- E · Dark Editorial ---------- */
+  .pe{background:#0A192F;color:#CCD6F6;font:400 13px/1.35 Inter}
+  .pe .head{padding:13px 16px 9px;border-bottom:1px solid #1D3557;font-size:11px;color:#8892B0;display:flex;justify-content:space-between}
+  .pe .row{display:grid;grid-template-columns:36px 1fr;gap:8px;padding:7px 16px}
+  .pe .n{font:500 9.5px/1.7 "JetBrains Mono";color:#64FFDA}
+  .pe b{font-weight:500;font-size:12.5px;display:block;letter-spacing:-.01em}
+  .pe span{display:block;font-size:10.5px;color:#8892B0;max-width:245px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- F · 节气色谱 ---------- */
+  .pf{background:#F4EFE4;color:#1A1A1A;font:400 12.5px/1.4 "Noto Sans SC",sans-serif}
+  .pf .title{font:900 25px/1.05 "Noto Serif SC",serif;padding:13px 18px 3px;letter-spacing:-.02em}
+  .pf .title em{font-style:normal;color:#C0392B;font-size:11px;font-family:"Noto Sans SC";font-weight:500;vertical-align:top;margin-left:6px;letter-spacing:0}
+  .pf .srch{margin:6px 18px 8px;border:1px solid #C9BFA9;padding:4px 8px;font-size:10.5px;color:#8A8172;background:#FAF6EE}
+  .pf .row{padding:6px 18px;border-bottom:1px solid #DED5C3}
+  .pf .row b{font:700 12px/1.3 "Noto Sans SC";display:block}
+  .pf .row span{display:block;font-size:10px;color:#6B6357;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pf .bands{display:flex;height:30px;align-items:flex-end;margin-top:2px}
+  .pf .band{flex:1;height:20px;display:grid;place-items:center;font-size:9px;color:#fff8}
+  .pf .band.on{flex:1.9;height:30px;background:#C0392B;color:#fff;font-weight:700;font-size:10px}
+</style>
+</head>
+<body>
+<h1>Skill Panel 美化 · 六张方向缩略图</h1>
+<div class="sub">每格是各方向最关键的一屏（430 宽面板顶部 300px 裁切），真字体 / 真配色 / 真骨架 / 真 skill 内容。</div>
+
+<div class="grid">
+
+  <!-- A -->
+  <figure>
+    <figcaption><b>A</b> Rasmus Andersson <em>克制灰阶 · 间距即层级</em></figcaption>
+    <div class="frame"><div class="panel pa">
+      <div class="search">搜索技能…</div>
+      <div class="grp">项目 · 9</div>
+      <div class="row on"><b>domain-modeling</b><span>Build and sharpen a project's domain model.</span></div>
+      <div class="row"><b>grill-me</b><span>A relentless interview to sharpen a plan or design.</span></div>
+      <div class="row"><b>huashu-design</b><span>花叔Design——用 HTML 做高保真原型、幻灯片、动画。</span></div>
+      <div class="row"><b>humanizer-yu</b><span>去除中文文本中的 AI 生成痕迹——西化句式、翻译腔。</span></div>
+      <div class="grp">内置 · 8</div>
+      <div class="row"><b>office-docx</b><span>Create, read, edit, and validate Word documents.</span></div>
+    </div></div>
+  </figure>
+
+  <!-- B -->
+  <figure>
+    <figcaption><b>B</b> Experimental Jetset <em>白纸目录 · 实线切格</em></figcaption>
+    <div class="frame"><div class="panel pb">
+      <div class="grpbar"><span>项目 · 9</span><span>XIANGMU</span></div>
+      <div class="row"><div class="idx">01</div><div><b>domain-modeling</b><p>Build and sharpen a project's domain model.</p></div></div>
+      <div class="row"><div class="idx">02</div><div><b>grill-me</b><p>A relentless interview to sharpen a plan or design.</p></div></div>
+      <div class="row"><div class="idx">03</div><div><b>grill-with-docs</b><p>An interview that also creates docs as we go.</p></div></div>
+      <div class="row"><div class="idx">04</div><div><b>grilling</b><p>Stress-test a plan, decision, or idea.</p></div></div>
+      <div class="grpbar"><span>内置 · 8</span><span>NEIZHI</span></div>
+      <div class="row"><div class="idx">11</div><div><b>office-docx</b><p>Create, read, edit and validate .docx files.</p></div></div>
+    </div></div>
+  </figure>
+
+  <!-- C -->
+  <figure>
+    <figcaption><b>C</b> Raycast <em>深色命令面板 · 无分隔线</em></figcaption>
+    <div class="frame"><div class="panel pc">
+      <div class="searchbox"><span>搜索技能…</span><span class="kbd">⌘K</span></div>
+      <div class="grp">项目</div>
+      <div class="row on"><div class="ico">do</div><div><b>domain-modeling</b><span>Build and sharpen a project's domain model.</span></div></div>
+      <div class="row"><div class="ico">gr</div><div><b>grill-me</b><span>A relentless interview to sharpen a plan or design.</span></div></div>
+      <div class="row"><div class="ico">hu</div><div><b>huashu-design</b><span>花叔Design——用 HTML 做高保真原型、幻灯片、动画。</span></div></div>
+      <div class="grp">内置</div>
+      <div class="row"><div class="ico">of</div><div><b>office-docx</b><span>Create, read, edit, and validate Word documents.</span></div></div>
+      <div class="row"><div class="ico">of</div><div><b>office-xlsx</b><span>Read, create, edit, and validate Excel workbooks.</span></div></div>
+    </div></div>
+  </figure>
+
+  <!-- D -->
+  <figure>
+    <figcaption><b>D</b> Linear <em>发丝描边 · 薄卡列表</em></figcaption>
+    <div class="frame"><div class="panel pd">
+      <div class="top">我的技能 · 19</div>
+      <div class="row"><div class="dot"></div><div><b>domain-modeling</b><span>Build and sharpen a project's domain model.</span></div></div>
+      <div class="row"><div class="dot"></div><div><b>grill-me</b><span>A relentless interview to sharpen a plan or design.</span></div></div>
+      <div class="row"><div class="dot" style="background:#64FFDA"></div><div><b>huashu-design</b><span>花叔Design——用 HTML 做高保真原型、幻灯片、动画。</span></div></div>
+      <div class="row"><div class="dot" style="background:#9A8CFF"></div><div><b>office-docx</b><span>Create, read, edit, and validate Word documents.</span></div></div>
+      <div class="row"><div class="dot" style="background:#9A8CFF"></div><div><b>office-xlsx</b><span>Read, create, edit, and validate Excel workbooks.</span></div></div>
+    </div></div>
+  </figure>
+
+  <!-- E -->
+  <figure>
+    <figcaption><b>E</b> Dark Editorial <em>深墨蓝 · 编号贯穿</em></figcaption>
+    <div class="frame"><div class="panel pe">
+      <div class="head"><span>我的技能</span><span>19</span></div>
+      <div class="row"><div class="n">01</div><div><b>domain-modeling</b><span>Build and sharpen a project's domain model.</span></div></div>
+      <div class="row"><div class="n">02</div><div><b>grill-me</b><span>A relentless interview to sharpen a plan or design.</span></div></div>
+      <div class="row"><div class="n">03</div><div><b>grill-with-docs</b><span>An interview that also creates docs as we go.</span></div></div>
+      <div class="row"><div class="n">04</div><div><b>huashu-design</b><span>花叔Design——用 HTML 做高保真原型、幻灯片、动画。</span></div></div>
+      <div class="row"><div class="n">05</div><div><b>humanizer-yu</b><span>去除中文文本中的 AI 生成痕迹——西化句式、翻译腔。</span></div></div>
+    </div></div>
+  </figure>
+
+  <!-- F -->
+  <figure>
+    <figcaption><b>F</b> 节气色谱 <em>暖纸册页 · 色带导航</em></figcaption>
+    <div class="frame"><div class="panel pf">
+      <div class="title">技能<em>十九种</em></div>
+      <div class="srch">搜索…</div>
+      <div class="row"><b>domain-modeling</b><span>Build and sharpen a project's domain model.</span></div>
+      <div class="row"><b>grill-me</b><span>A relentless interview to sharpen a plan or design.</span></div>
+      <div class="row"><b>huashu-design</b><span>花叔Design——用 HTML 做高保真原型、幻灯片、动画。</span></div>
+      <div class="bands">
+        <div class="band on">项目 9</div>
+        <div class="band" style="background:#7A8B5E">用户 2</div>
+        <div class="band" style="background:#3C5A79">内置 8</div>
+      </div>
+    </div></div>
+  </figure>
+
+</div>
+</body>
+</html>

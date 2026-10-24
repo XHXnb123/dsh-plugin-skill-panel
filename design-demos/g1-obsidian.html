@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>蛛网一 · 知识图谱（Obsidian 原生）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#101114;font-family:Inter,"Noto Sans SC",sans-serif}
+  .panel{position:relative;width:430px;height:620px;background:
+      radial-gradient(120% 80% at 50% 0%,#23252B 0%,#1B1C20 45%,#17181C 100%);
+      border:1px solid #ffffff14;border-radius:14px;overflow:hidden;box-shadow:0 24px 60px #000a}
+  .panel::after{content:"";position:absolute;inset:0;pointer-events:none;
+      background:radial-gradient(120% 100% at 50% 50%,transparent 55%,#0b0c0f66 100%)}
+  .bar{position:absolute;left:0;right:0;top:0;z-index:5;display:flex;align-items:center;gap:8px;
+      padding:12px 12px 10px;background:linear-gradient(#1B1C20 62%,#1B1C2000)}
+  .bar .q{flex:1;display:flex;align-items:center;gap:8px;background:#24262C;border-radius:9px;
+      padding:7px 10px;color:#8B8D96;font-size:12.5px;border:1px solid #ffffff0d}
+  .bar .q input{flex:1;min-width:0;background:none;border:0;outline:none;color:#E6E7EB;font:400 12.5px Inter,"Noto Sans SC"}
+  .bar .n{font:500 11px "JetBrains Mono",monospace;color:#7C7E88;flex:none}
+  .wrap{position:absolute;inset:0}
+  .wrap svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .bar .q svg{width:13px;height:13px;flex:none;opacity:.75}
+  .edge{stroke:#5C5F6A;stroke-width:.9;opacity:.32;transition:opacity .15s,stroke-width .15s}
+  .edge.hi{stroke:#9AA7C7;opacity:.95;stroke-width:1.3}
+  .edge.dim{opacity:.1}
+  .node{cursor:pointer}
+  .node .dot{stroke:#0F1013;stroke-width:1.4;transition:r .15s,filter .15s}
+  .node:hover .dot,.node.sel .dot{filter:drop-shadow(0 0 6px currentColor)}
+  .node .halo{fill:currentColor;opacity:0;transition:opacity .15s}
+  .node:hover .halo,.node.sel .halo{opacity:.14}
+  .lbl{font:500 11px Inter,"Noto Sans SC";fill:#D6D8DE;paint-order:stroke;stroke:#1B1C20;stroke-width:3px;
+      pointer-events:none;opacity:0;transition:opacity .12s}
+  .lbl.show{opacity:1}
+  .lbl .sub{fill:#8B8D96;font-size:9.5px}
+  .hub{fill:#2A2C33;stroke:#4A4D57;stroke-width:1}
+  .hubtxt{font:600 10px Inter,"Noto Sans SC";fill:#9A9CA6;letter-spacing:.06em;paint-order:stroke;stroke:#1B1C20;stroke-width:3px}
+  .tip{position:absolute;z-index:6;left:12px;right:12px;bottom:12px;background:#24262C;border:1px solid #ffffff14;
+      border-radius:10px;padding:10px 12px;box-shadow:0 12px 30px #0008;display:none}
+  .tip.on{display:block}
+  .tip .t{display:flex;align-items:baseline;gap:8px}
+  .tip .t b{font:600 13px Inter,"Noto Sans SC";color:#F0F1F4;letter-spacing:-.01em}
+  .tip .t i{font:500 10px "JetBrains Mono",monospace;color:#7C7E88;font-style:normal;margin-left:auto}
+  .tip p{margin:4px 0 9px;font-size:11.5px;line-height:1.5;color:#A9ABB4;max-height:34px;overflow:hidden}
+  .tip .acts{display:flex;gap:6px}
+  .tip button{font:500 11px Inter,"Noto Sans SC";padding:5px 10px;border-radius:7px;border:1px solid #ffffff1a;
+      background:#2C2E35;color:#DCDDE2;cursor:pointer}
+  .tip button.pri{background:#3B6FF6;border-color:#3B6FF6;color:#fff}
+  .hint{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:11px;color:#6E707A;z-index:4}
+  .legend{position:absolute;left:12px;bottom:12px;z-index:4;display:none;gap:10px;font-size:10.5px;color:#8B8D96}
+  .legend.on{display:flex}
+  .legend i{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px}
+</style>
+</head>
+<body>
+<div class="panel" id="panel">
+  <div class="bar">
+    <div class="q">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+      <input id="q" placeholder="搜索技能…" autocomplete="off">
+    </div>
+    <span class="n" id="cnt">19</span>
+  </div>
+  <div class="wrap" id="wrap"></div>
+  <div class="hint" id="hint">悬停节点看名字 · 点击选中</div>
+  <div class="legend" id="legend">
+    <span><i style="background:#7EA6E0"></i>项目</span>
+    <span><i style="background:#82C99A"></i>用户</span>
+    <span><i style="background:#E0A458"></i>内置</span>
+  </div>
+  <div class="tip" id="tip">
+    <div class="t"><b id="tipname"></b><i id="tipsrc"></i></div>
+    <p id="tipdesc"></p>
+    <div class="acts"><button class="pri">执行</button><button>插入</button><button>看</button></div>
+  </div>
+</div>
+<script>
+const DATA = [
+  ["domain-modeling","Build and sharpen a project's domain model.","project"],
+  ["grill-me","A relentless interview to sharpen a plan or design.","project"],
+  ["grill-with-docs","An interview that also writes ADRs and a glossary.","project"],
+  ["grilling","Grill the user relentlessly about a plan, decision, or idea.","project"],
+  ["humanizer-yu","去除中文文本中的 AI 生成痕迹——西化句式、翻译腔、AI 高频词。","project"],
+  ["natural-chinese","让中文读起来像人写的：自然中文写作与改写。","project"],
+  ["paper-humanizer","Academic text polisher and humanizer.","project"],
+  ["tencent-channel-community","腾讯频道社区管理：频道、成员、帖子、评论。","project"],
+  ["wechat-oa-style","采集公众号文章，产出证据化的文风总结。","project"],
+  ["huashu-design","花叔Design——用 HTML 做高保真原型、幻灯片、动画。","user"],
+  ["huashu-art-motion","艺术与视频动画：拆解复刻动画，36 种风格、9 种解说语法。","user"],
+  ["office","Create, edit, inspect, or convert Office documents.","bundled"],
+  ["office-docx","Create, read, edit, and validate Word documents.","bundled"],
+  ["office-export-pdf","Convert an Office document to a requested PDF.","bundled"],
+  ["office-pptx","Create, read, edit, and validate PowerPoint decks.","bundled"],
+  ["office-recalculate","Refresh spreadsheet formula caches.","bundled"],
+  ["office-render","Render document images or inspect visual layout.","bundled"],
+  ["office-xlsx","Read, create, edit, and validate Excel workbooks.","bundled"],
+  ["diagnose-windows-sandbox-acl","Diagnose unexpected DSH sandbox access denials on Windows.","bundled"]
+];
+const COLOR = { project:"#7EA6E0", user:"#82C99A", bundled:"#E0A458" };
+const LABEL = { project:"项目", user:"用户", bundled:"内置" };
+
+// 三个簇的引力中心与半径：项目偏上、用户偏右、内置偏下，形成斜向三角
+const CLUSTER = {
+  project: { cx:146, cy:196, r:104 },
+  user:    { cx:302, cy:330, r:58 },
+  bundled: { cx:228, cy:468, r:88 }
+};
+
+function build(){
+  const bySrc = { project:[], user:[], bundled:[] };
+  DATA.forEach(([n,d,s])=>bySrc[s].push([n,d,s]));
+  const nodes = [];
+  const hubs = [];
+  Object.entries(bySrc).forEach(([src,arr])=>{
+    const c = CLUSTER[src];
+    hubs.push({ src, x:c.cx, y:c.cy, n:arr.length });
+    const step = (Math.PI*2)/arr.length;
+    arr.forEach((item,i)=>{
+      // 起始角随簇偏移，避免三簇节点在视觉上排成一条竖线
+      const a = -Math.PI/2 + i*step + (src==="user"?0.5:src==="bundled"?0.9:0.15);
+      // 半径做一点伪随机抖动（固定种子，截图稳定）
+      const jitter = 1 + 0.16*Math.sin(i*2.3 + c.cx);
+      nodes.push({ name:item[0], desc:item[1], src,
+        x: c.cx + Math.cos(a)*c.r*jitter,
+        y: c.cy + Math.sin(a)*c.r*jitter,
+        r: 4.1 + Math.min(item[0].length,26)*0.085 });
+    });
+  });
+  const edges = [];
+  // 辐条：簇心 -> 簇内每个节点
+  let cursor = 0;
+  Object.entries(bySrc).forEach(([src,arr])=>{
+    for(let i=0;i<arr.length;i++) edges.push({ a:hubs.find(h=>h.src===src), b:nodes[cursor+i], kind:"spoke" });
+    cursor += arr.length;
+  });
+  // 环：同簇相邻两两相连，形成蛛网而不是星芒
+  cursor = 0;
+  Object.entries(bySrc).forEach(([src,arr])=>{
+    for(let i=0;i<arr.length;i++){
+      const A = nodes[cursor+i], B = nodes[cursor+((i+1)%arr.length)];
+      if(arr.length>2) edges.push({ a:A, b:B, kind:"ring" });
+      if(arr.length>4 && i%2===0) edges.push({ a:A, b:nodes[cursor+((i+2)%arr.length)], kind:"web" });
+    }
+    cursor += arr.length;
+  });
+  return { nodes, hubs, edges };
+}
+
+const G = build();
+const wrap = document.getElementById("wrap");
+const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+svg.setAttribute("viewBox","0 0 430 620");
+wrap.appendChild(svg);
+
+const edgeEls = [];
+G.edges.forEach((e,i)=>{
+  const mx = (e.a.x+e.b.x)/2, my = (e.a.y+e.b.y)/2;
+  // 轻微外弯，避免所有边都是死直线
+  const dx = e.b.x-e.a.x, dy = e.b.y-e.a.y, len = Math.hypot(dx,dy)||1;
+  const bow = e.kind==="web" ? 18 : e.kind==="ring" ? 12 : 4;
+  const cx = mx - dy/len*bow, cy = my + dx/len*bow;
+  const p = document.createElementNS("http://www.w3.org/2000/svg","path");
+  p.setAttribute("d",`M${e.a.x.toFixed(1)} ${e.a.y.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${e.b.x.toFixed(1)} ${e.b.y.toFixed(1)}`);
+  p.setAttribute("class","edge"); p.setAttribute("fill","none");
+  p.dataset.i = i;
+  svg.appendChild(p);
+  edgeEls.push(p);
+});
+
+G.hubs.forEach(h=>{
+  const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  c.setAttribute("cx",h.x); c.setAttribute("cy",h.y); c.setAttribute("r",13);
+  c.setAttribute("class","hub"); svg.appendChild(c);
+  const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+  t.setAttribute("x",h.x); t.setAttribute("y",h.y+3.5); t.setAttribute("text-anchor","middle");
+  t.setAttribute("class","hubtxt"); t.textContent = h.n; svg.appendChild(t);
+  const cap = document.createElementNS("http://www.w3.org/2000/svg","text");
+  cap.setAttribute("x",h.x); cap.setAttribute("y",h.y+30); cap.setAttribute("text-anchor","middle");
+  cap.setAttribute("class","hubtxt"); cap.setAttribute("style","font-size:9px;fill:#71737D;letter-spacing:.12em");
+  cap.textContent = LABEL[h.src]; svg.appendChild(cap);
+});
+
+const nodeEls = [];
+G.nodes.forEach((n,i)=>{
+  const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+  g.setAttribute("class","node"); g.dataset.i = i;
+  g.setAttribute("style",`color:${COLOR[n.src]}`);
+  const halo = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  halo.setAttribute("cx",n.x); halo.setAttribute("cy",n.y); halo.setAttribute("r",13);
+  halo.setAttribute("class","halo"); g.appendChild(halo);
+  const dot = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  dot.setAttribute("cx",n.x); dot.setAttribute("cy",n.y); dot.setAttribute("r",n.r);
+  dot.setAttribute("fill",COLOR[n.src]); dot.setAttribute("class","dot"); g.appendChild(dot);
+  svg.appendChild(g);
+  nodeEls.push(g);
+});
+
+// 标签按需出现：悬停、选中、搜索结果
+const labelEls = G.nodes.map(n=>{
+  const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+  t.setAttribute("class","lbl"); t.setAttribute("x",n.x); t.setAttribute("y",n.y-9);
+  t.setAttribute("text-anchor","middle"); t.textContent = n.name;
+  svg.appendChild(t); return t;
+});
+
+let sel = -1;
+const tip = document.getElementById("tip");
+const hint = document.getElementById("hint");
+const legend = document.getElementById("legend");
+
+function related(i){
+  const s = new Set();
+  G.edges.forEach((e,ei)=>{
+    const ai = G.nodes.indexOf(e.a), bi = G.nodes.indexOf(e.b);
+    if(ai===i) s.add(ei); if(bi===i) s.add(ei);
+  });
+  return s;
+}
+
+function focus(i){
+  const rel = related(i);
+  edgeEls.forEach((p,ei)=>{
+    p.setAttribute("class","edge" + (rel.has(ei) ? " hi" : " dim"));
+  });
+}
+
+function clearFocus(){
+  edgeEls.forEach(p=>p.setAttribute("class","edge"));
+}
+
+function showTip(i){
+  const n = G.nodes[i];
+  document.getElementById("tipname").textContent = n.name;
+  document.getElementById("tipsrc").textContent = LABEL[n.src];
+  document.getElementById("tipdesc").textContent = n.desc;
+  tip.classList.add("on"); hint.style.display="none"; legend.classList.remove("on");
+}
+
+function hideTip(){
+  tip.classList.remove("on"); hint.style.display="block";
+}
+
+nodeEls.forEach((g,i)=>{
+  g.addEventListener("mouseenter",()=>{ labelEls[i].classList.add("show"); focus(i); });
+  g.addEventListener("mouseleave",()=>{
+    if(sel!==i) labelEls[i].classList.remove("show");
+    if(sel===-1) clearFocus(); else focus(sel);
+  });
+  g.addEventListener("click",(ev)=>{
+    ev.stopPropagation();
+    nodeEls.forEach(x=>x.classList.remove("sel"));
+    labelEls.forEach(x=>x.classList.remove("show"));
+    if(sel===i){ sel=-1; hideTip(); clearFocus(); return; }
+    sel = i;
+    g.classList.add("sel"); labelEls[i].classList.add("show");
+    focus(i); showTip(i);
+  });
+});
+
+document.getElementById("q").addEventListener("input",e=>{
+  const q = e.target.value.trim().toLowerCase();
+  let hit = 0;
+  G.nodes.forEach((n,i)=>{
+    const ok = !q || n.name.toLowerCase().includes(q) || n.desc.toLowerCase().includes(q);
+    nodeEls[i].style.opacity = ok ? 1 : .18;
+    if(q && ok){ labelEls[i].classList.add("show"); hit++; }
+    else if(!q && sel!==i) labelEls[i].classList.remove("show");
+  });
+  edgeEls.forEach(p=>p.style.opacity = q ? .06 : "");
+  document.getElementById("cnt").textContent = q ? `${hit}/19` : "19";
+});
+
+document.getElementById("panel").addEventListener("click",()=>{
+  if(sel!==-1){
+    nodeEls[sel].classList.remove("sel"); labelEls[sel].classList.remove("show");
+    sel = -1; hideTip(); clearFocus();
+  }
+});
+</script>
+</body>
+</html>

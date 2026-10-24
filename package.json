@@ -1,0 +1,51 @@
+{
+  "name": "dsh-plugin-skill-panel",
+  "version": "0.1.0",
+  "description": "在 DSH Web GUI 右下角挂一张 Skill 星图：按用途分六段弧展示本机全部 skill，可搜索、可预览 SKILL.md、可一键把调用语插入输入框或直接发出。",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./client": "./src/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "cordis.patch.yml",
+    "README.md",
+    "docs"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/XHXnb123/dsh-plugin-skill-panel.git"
+  },
+  "homepage": "https://github.com/XHXnb123/dsh-plugin-skill-panel#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "scripts": {
+    "check": "node --check src/index.mjs && node --check src/scan.mjs",
+    "scan": "node test-scan.mjs"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "cordis",
+    "skill",
+    "panel"
+  ],
+  "license": "MIT"
+}

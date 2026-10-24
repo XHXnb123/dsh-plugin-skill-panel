@@ -1,0 +1,324 @@
+{
+  "ok": true,
+  "skills": [
+    {
+      "name": "diagnose-windows-sandbox-acl",
+      "description": "Use on Windows for unexpected DSH sandbox access denials: workspace writes or listing fail, or an ordinarily readable path cannot be read. One bundled command inspects the path and every ancestor and repairs the ACL problems it proves in that same run. Expected confinement denials need no ACL repair.",
+      "whenToUse": "",
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "path": "<app>/resources/runtime/office-skills/diagnose-windows-sandbox-acl/SKILL.md",
+      "dir": "<app>/resources/runtime/office-skills/diagnose-windows-sandbox-acl",
+      "kind": "bundle",
+      "size": 6982,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "domain-modeling",
+      "description": "Build and sharpen a project's domain model. Use when discussing codebase terminology, writing or editing a CONTEXT.md, or recording or editing an ADR.",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/domain-modeling/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/domain-modeling",
+      "kind": "bundle",
+      "size": 3219,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "grill-me",
+      "description": "A relentless interview to sharpen a plan or design.",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/grill-me/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/grill-me",
+      "kind": "bundle",
+      "size": 157,
+      "invocation": {
+        "modelInvocable": false,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "grill-with-docs",
+      "description": "A relentless interview to sharpen a plan or design, which also creates docs (ADR's and glossary) as we go.",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/grill-with-docs/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/grill-with-docs",
+      "kind": "bundle",
+      "size": 247,
+      "invocation": {
+        "modelInvocable": false,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "grilling",
+      "description": "Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phrases.",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/grilling/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/grilling",
+      "kind": "bundle",
+      "size": 1987,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "huashu-art-motion",
+      "description": "艺术与视频动画：拆解复刻动画；36种既有实做风格＋16种可迁移研究配方；9种解说动画语法，8种可按口播参数渲片段；含口播整片参考代码及框景检查；人用AI生帧；可选已有录音、系统声音与语音复刻，按需配置。",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/huashu-art-motion/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/huashu-art-motion",
+      "kind": "bundle",
+      "size": 24377,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "huashu-design",
+      "description": "花叔Design——用HTML做高保真原型、幻灯片、动画、可视化与专家评审。任何新设计100%先出三个方向初稿给用户选（指定风格/品牌也不豁免），选定后才执行。触发词：做原型、PPT、幻灯片、动画、设计风格、评审、做个HTML页面、UI mockup、导出MP4/GIF、做个好看的。生产级Web App/需后端的系统不适用。",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/huashu-design/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/huashu-design",
+      "kind": "bundle",
+      "size": 15558,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "humanizer-yu",
+      "description": "去除中文文本中的 AI 生成痕迹——西化句式、翻译腔、AI 高频词、套路化结构。",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/humanizer-yu/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/humanizer-yu",
+      "kind": "bundle",
+      "size": 7961,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "natural-chinese",
+      "description": "Use this skill whenever generating or rewriting Chinese text that needs to sound natural and human-written. Triggers include: any request to write, draft, polish, or edit Chinese prose (articles, reports, social media copy, memos, newsletters, product descriptions, etc.), any mention of 'AI味', '去AI痕迹', '自然中文', '润色', or requests to make Chinese text sound more human. Do NOT use for English-only writing, code generation, or translation tasks where the target is not Chinese prose.",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/natural-chinese/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/natural-chinese",
+      "kind": "bundle",
+      "size": 13061,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "office",
+      "description": "Create, edit, inspect, or convert Office documents, spreadsheets, presentations, and PDFs. Load to choose the relevant workflow.",
+      "whenToUse": "",
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "path": "<app>/resources/runtime/office-skills/office/SKILL.md",
+      "dir": "<app>/resources/runtime/office-skills/office",
+      "kind": "bundle",
+      "size": 957,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "office-docx",
+      "description": "Create, read, edit, and validate Word documents (.docx).",
+      "whenToUse": "",
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "path": "<app>/resources/runtime/office-skills/office-docx/SKILL.md",
+      "dir": "<app>/resources/runtime/office-skills/office-docx",
+      "kind": "bundle",
+      "size": 3725,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "office-export-pdf",
+      "description": "Convert an Office document to a requested PDF with LibreOffice Kit.",
+      "whenToUse": "",
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "path": "<app>/resources/runtime/office-skills/office-export-pdf/SKILL.md",
+      "dir": "<app>/resources/runtime/office-skills/office-export-pdf",
+      "kind": "bundle",
+      "size": 1761,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "office-pptx",
+      "description": "Create, read, edit, and validate PowerPoint presentations (.pptx).",
+      "whenToUse": "",
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "path": "<app>/resources/runtime/office-skills/office-pptx/SKILL.md",
+      "dir": "<app>/resources/runtime/office-skills/office-pptx",
+      "kind": "bundle",
+      "size": 4415,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "office-recalculate",
+      "description": "Refresh spreadsheet formula caches and verify calculated values with LibreOffice Kit.",
+      "whenToUse": "",
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "path": "<app>/resources/runtime/office-skills/office-recalculate/SKILL.md",
+      "dir": "<app>/resources/runtime/office-skills/office-recalculate",
+      "kind": "bundle",
+      "size": 1723,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "office-render",
+      "description": "Render requested document images or inspect visual layout with LibreOffice Kit.",
+      "whenToUse": "",
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "path": "<app>/resources/runtime/office-skills/office-render/SKILL.md",
+      "dir": "<app>/resources/runtime/office-skills/office-render",
+      "kind": "bundle",
+      "size": 4841,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "office-xlsx",
+      "description": "Read, create, edit, and validate Excel workbooks, data, and formulas (.xlsx).",
+      "whenToUse": "",
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "path": "<app>/resources/runtime/office-skills/office-xlsx/SKILL.md",
+      "dir": "<app>/resources/runtime/office-skills/office-xlsx",
+      "kind": "bundle",
+      "size": 4579,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "paper-humanizer",
+      "description": "Academic text polisher and humanizer for Chinese and English research writing. Removes AI-like patterns while preserving factual accuracy. Use when polishing academic text, reducing AI-generated patterns in papers/theses, improving naturalness of research writing while maintaining data integrity, or enhancing scholarly tone without fabricating facts. Supports both Chinese (中文) and English academic texts with configurable tone, field-specific terminology, and strict factuality controls.",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/paper-humanizer/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/paper-humanizer",
+      "kind": "bundle",
+      "size": 3253,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "tencent-channel-community",
+      "description": "腾讯频道(QQ频道)社区管理 skill（CLI 版）。频道创建/设置/搜索/加入/退出，成员管理/禁言/踢人，帖子发布/编辑/删除/移动/搜索，评论/回复/点赞，版块管理，分享链接解析，频道私信，加入设置管理，内容巡检，问答自动回复。涉及腾讯频道、频道帖子、频道成员相关任务时应优先使用。",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/tencent-channel-community/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/tencent-channel-community",
+      "kind": "bundle",
+      "size": 14168,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    },
+    {
+      "name": "wechat-oa-style",
+      "description": "Collect articles from WeChat official accounts (微信公众号) into an Obsidian vault and produce an evidence-based writing-style (文风) summary. Use when the user asks to read/summarize a 公众号's articles, analyze 文风/写作风格 of a public account, or build a local corpus from mp.weixin.qq.com articles. Handles the case where WeChat desktop cannot be read programmatically, by driving a real browser over CDP and using Sogou WeChat search as an article index.",
+      "whenToUse": "",
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "path": "/path/to/your-project/.dsh/skills/wechat-oa-style/SKILL.md",
+      "dir": "/path/to/your-project/.dsh/skills/wechat-oa-style",
+      "kind": "bundle",
+      "size": 8510,
+      "invocation": {
+        "modelInvocable": true,
+        "userInvocable": true
+      }
+    }
+  ],
+  "errors": [],
+  "roots": [
+    {
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "dir": "/path/to/your-project/.dsh/skills"
+    },
+    {
+      "source": "project",
+      "sourceLabel": "项目 · your-project",
+      "dir": "/path/to/your-project/.dsh/skills"
+    },
+    {
+      "source": "agents",
+      "sourceLabel": "自定义",
+      "dir": "~/.agents/skills"
+    },
+    {
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "dir": "<app>/resources/runtime/office-skills"
+    },
+    {
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "dir": "<app>/resources/runtime/office-skills"
+    },
+    {
+      "source": "bundled",
+      "sourceLabel": "内置",
+      "dir": "<app>/resources/runtime/office-skills"
+    }
+  ],
+  "scannedAt": "2026-10-24T03:34:54.597Z"
+}

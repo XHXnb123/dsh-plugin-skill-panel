@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>方向一 · Raycast — 深色命令面板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:#0B0B0D;font-family:Inter,system-ui,sans-serif;display:grid;place-items:center;
+       background-image:radial-gradient(120% 80% at 80% 0%,#17181d 0%,#0B0B0D 60%)}
+  /* 宿主轮廓：暗示面板嵌在窗口右下 */
+  .host{position:relative;width:1180px;height:760px;border-radius:12px;background:#131316;
+        box-shadow:0 40px 120px -40px #000,0 0 0 1px #ffffff0a;overflow:hidden}
+  .host .bar{height:46px;border-bottom:1px solid #ffffff0a;display:flex;align-items:center;gap:9px;padding:0 18px;color:#6d6e75;font-size:12px}
+  .host .dot{width:8px;height:8px;border-radius:50%;background:#2a2b31}
+  .host .ghost{position:absolute;left:34px;top:120px;width:560px;font-size:13px;line-height:1.9;color:#3a3b41}
+  .host .ghost p{margin:0 0 14px}
+  .host .ghost .msg{background:#1b1c20;border-radius:10px;padding:12px 16px;width:fit-content;color:#54565e}
+
+  /* ---------- 面板本体 ---------- */
+  .panel{position:absolute;right:22px;bottom:22px;width:430px;height:620px;background:#17171A;border-radius:10px;
+         box-shadow:0 26px 70px -18px #000d,0 0 0 1px #ffffff12;display:flex;flex-direction:column;overflow:hidden;
+         color:#F2F2F2;font-size:13px}
+  .p-top{padding:10px 10px 6px}
+  .p-search{display:flex;align-items:center;gap:9px;background:#202024;border-radius:8px;padding:8px 10px;color:#8A8A90;font-size:13px}
+  .p-search input{flex:1;min-width:0;background:none;border:0;outline:none;color:#E8E8EC;font:400 13px Inter}
+  .p-search svg{flex:none;opacity:.55}
+  .p-search .kbd{margin-left:auto;font:500 11px "JetBrains Mono";background:#2C2C32;color:#A8A8B0;padding:1.5px 5px;border-radius:4px}
+  .p-list{flex:1;overflow:hidden;padding:2px 0 0}
+  .p-grp{padding:10px 15px 3px;font-size:11px;color:#9A9AA3;display:flex;justify-content:space-between}
+  .p-grp .n{color:#5a5a62}
+  .p-row{display:flex;align-items:center;gap:10px;padding:6px 8px;margin:0 5px;border-radius:6px;cursor:default}
+  .p-row.on{background:#26262C}
+  .p-ico{width:23px;height:23px;border-radius:5px;background:#2A2A31;color:#B9B9C2;display:grid;place-items:center;
+         font:600 11px "JetBrains Mono";flex:none;letter-spacing:-.03em}
+  .p-txt{min-width:0;flex:1}
+  .p-name{font-weight:500;font-size:13px;letter-spacing:-.01em}
+  .p-desc{font-size:12px;color:#9A9AA3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .p-acts{display:flex;gap:4px;visibility:hidden}
+  .p-row:hover .p-acts,.p-row.on .p-acts{visibility:visible}
+  .btn{font:500 10.5px Inter;border-radius:5px;padding:3px 7px;border:1px solid #ffffff14;background:#2b2b31;color:#c9c9d1;cursor:pointer}
+  .btn.pri{background:#3B6FF6;border-color:#3B6FF6;color:#fff}
+  .p-foot{border-top:1px solid #ffffff0d;padding:8px 14px;display:flex;align-items:center;gap:12px;font-size:11px;color:#6f6f78}
+  .p-foot .k{font:500 9px "JetBrains Mono";background:#242429;padding:1px 4px;border-radius:3px;color:#9a9aa3}
+  .p-foot .sp{margin-left:auto}
+</style>
+</head>
+<body>
+<div class="host">
+  <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span style="margin-left:8px">xhxnb-note — DeepSeek Harness</span></div>
+<div class="panel">
+    <div class="p-top">
+      <div class="p-search">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.6"/><path d="M10.4 10.4 14 14"/></svg>
+        <span>搜索技能…</span><span class="kbd">⌘K</span>
+      </div>
+    </div>
+    <div class="p-list" id="list"></div>
+    <div class="p-foot">
+      <span><span class="k">Enter</span> 执行</span>
+      <span><span class="k">Tab</span> 插入</span>
+      <span><span class="k">Space</span> 预览</span>
+      <span class="sp">19 个</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  ['domain-modeling','Build and sharpen a project\u2019s domain model.','project'],
+  ['grill-me','A relentless interview to sharpen a plan or design.','project'],
+  ['grill-with-docs','An interview that also writes ADRs and a glossary.','project'],
+  ['grilling','Grill the user relentlessly about a plan, decision, or idea.','project'],
+  ['humanizer-yu','去除中文文本中的 AI 生成痕迹——西化句式、翻译腔。','project'],
+  ['natural-chinese','让中文读起来像人写的：自然中文写作与改写。','project'],
+  ['paper-humanizer','Academic text polisher and humanizer.','project'],
+  ['tencent-channel-community','腾讯频道社区管理：频道、成员、帖子、评论。','project'],
+  ['wechat-oa-style','采集公众号文章，产出证据化的文风总结。','project'],
+  ['huashu-design','花叔Design——用 HTML 做高保真原型、幻灯片、动画。','user'],
+  ['huashu-art-motion','艺术与视频动画：拆解复刻动画，36 种风格、9 种解说语法。','user'],
+  ['office','Create, edit, inspect, or convert Office documents.','bundled'],
+  ['office-docx','Create, read, edit, and validate Word documents.','bundled'],
+  ['office-export-pdf','Convert an Office document to a requested PDF.','bundled'],
+  ['office-pptx','Create, read, edit, and validate PowerPoint decks.','bundled'],
+  ['office-recalculate','Refresh spreadsheet formula caches.','bundled'],
+  ['office-render','Render document images or inspect visual layout.','bundled'],
+  ['office-xlsx','Read, create, edit, and validate Excel workbooks.','bundled'],
+  ['diagnose-windows-sandbox-acl','Use on Windows for unexpected DSH sandbox denials.','bundled']
+];
+const GRP = { project:'项目', user:'用户', bundled:'内置' };
+const list = document.getElementById('list');
+let html = '', last = null, idx = 0;
+for (const [name, desc, src] of DATA) {
+  if (src !== last) {
+    html += `<div class="p-grp"><span>${GRP[src]}</span><span class="n">${
+      src==='project'?9:src==='user'?2:8}</span></div>`;
+    last = src;
+  }
+  idx++;
+  const on = name === 'huashu-design' ? ' on' : '';
+  html += `<div class="p-row${on}">
+    <div class="p-ico">${name.slice(0,2)}</div>
+    <div class="p-txt"><div class="p-name">${name}</div><span class="p-desc">${desc}</span></div>
+    <div class="p-acts"><button class="btn pri">执行</button><button class="btn">插入</button><button class="btn">看</button></div>
+  </div>`;
+}
+list.innerHTML = html;
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# dsh-plugin-skill-panel — 插入 Skill 面板（GUI 浮卡 + /skill-panel/* 路由）
+- insert:
+    - id: skill-panel
+      name: 'dsh-plugin-skill-panel'
+      config: {}
