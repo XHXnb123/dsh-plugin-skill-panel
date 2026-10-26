@@ -69,6 +69,52 @@ const PINS_PATH = "/skill-panel/pins";
       "grilling": "engineering",
     };
 
+    // skill 的中文介绍：SKILL.md 的 description 大多写的是英文，这里给一份内置中译，
+    // 没有收录的新技能照常回退原文。名字对应 SKILL.md 里的 name。
+    const DESC_ZH = {
+      "agent-introspection-debugging":
+        "结构化的自调试流程：捕获、诊断、受控恢复，最后出一份内省报告。agent 跑挂了要的是能复现的定位，而不是再试一次。",
+      "change-impact":
+        "改代码、数据、接口或治理文档之前，先做有据可查的影响分析，改完再拿实际 diff 对照计划。覆盖调用链、数据结构、API 契约、测试、文档、ADR、部署、迁移和回滚。",
+      "context-and-decisions":
+        "用范围极小的 CONTEXT.md 管住稳定的领域词汇，把难回退的决策交给 ADR 技能。术语要反复解释、一个词有好几种意思、或者领域语义必须和架构决策分开时用它。",
+      "diagnose-windows-sandbox-acl":
+        "Windows 上遇到意料之外的 DSH 沙箱拒绝时用：工作区写入或列目录失败，或本该能读的路径读不到。一条内置命令会检查该路径和每一级父目录，只修复它当场证实的问题。",
+      "domain-modeling":
+        "建立并打磨项目的领域模型。讨论代码库术语、撰写或修改 CONTEXT.md、记录或修改 ADR 时用它。",
+      "grill-me": "一场不留情面的追问，把方案或设计锤炼清楚。",
+      "grill-with-docs": "同样是不留情面的追问，边问边把 ADR 和术语表一起写出来。",
+      "grilling":
+        "就一个方案、决定或想法，对你不留情面地追问。想压力测试自己的思考，或说出「拷问我」这类话时用它。",
+      "hallmark":
+        "给网站和新页面做设计的技能，目标是看得出设计过、不是生成的。要新建或设计新东西时用它，或者直接点名 Hallmark。既有设计上别用，除非你点名，例如 /hallmark redesign <path>。",
+      "natural-chinese":
+        "生成或改写中文、且要读起来像人写的，就用它。写文章、报告、社交媒体文案、备忘录、简报、产品描述，或提到「AI 味」「去 AI 痕迹」「自然中文」「润色」时都算。纯英文写作、写代码、译文目标不是中文时不要用。",
+      office: "创建、编辑、检查或转换 Office 文档、表格、演示文稿和 PDF。先加载它来选对应的工作流。",
+      "office-docx": "创建、读取、编辑并校验 Word 文档（.docx）。",
+      "office-export-pdf": "用 LibreOffice Kit 把 Office 文档转成指定的 PDF。",
+      "office-pptx": "创建、读取、编辑并校验 PowerPoint 演示文稿（.pptx）。",
+      "office-recalculate": "用 LibreOffice Kit 刷新表格公式缓存，并核对算出来的值。",
+      "office-render": "用 LibreOffice Kit 把文档渲染成图片，或者检查版面效果。",
+      "office-xlsx": "读取、创建、编辑并校验 Excel 工作簿、数据和公式（.xlsx）。",
+      "paper-humanizer":
+        "面向中英文科研写作的学术润色与去痕工具。不动事实的前提下淡化 AI 生成痕迹。润色论文、降低 AI 味、提升可读性、加强学术语气又不编造内容时用它。",
+      "security-audit":
+        "面向代码库、API、服务、命令行工具、库和守护进程的安全建议与漏洞审查。安全提问、专项评审、漏洞研究、安全审计、渗透测试时用它。只有明确要求代码库审计、渗透测试、全量评审或要报告时，才跑完整流程。",
+      "skill-host-compat":
+        "给 skill 提 PR 之前，检查 frontmatter 对 Codex / Cursor 是否安全，以及有没有 Claude 专属替换。",
+      "strategic-compact":
+        "在合适的节点提示手动压缩上下文，让上下文按任务阶段保留，而不是被随机自动压缩。会话快到上限、而任务正好告一段落时用它。",
+      "wechat-oa-style":
+        "把公众号文章采集进 Obsidian 库，产出有证据支撑的文风总结。要读或总结某个公众号的文章、分析文风、建本地语料时用它。公众号桌面端读不到也能处理：用 CDP 驱动真实浏览器，拿搜狗微信搜索当索引。",
+    };
+
+    /** 中文介绍优先，没收录的回退 SKILL.md 原文。 */
+    function descOf(skill) {
+      const name = String((skill && skill.name) || "");
+      return DESC_ZH[name] || (skill && skill.description) || "";
+    }
+
     /** 名字优先、关键字兜底；认不出来的一律归到「工程与规划」。 */
     function classify(skill) {
       const name = String((skill && skill.name) || "").toLowerCase();
@@ -417,7 +463,7 @@ const PINS_PATH = "/skill-panel/pins";
       for (const node of nodes) {
         const color = SOURCE_COLORS[node.source] || "#8a8f9c";
         const isSel = picked && picked.name === node.skill.name;
-        const matched = !query || (node.skill.name + " " + (node.skill.description || "")).toLowerCase().indexOf(query) >= 0;
+        const matched = !query || (node.skill.name + " " + descOf(node.skill) + " " + (node.skill.description || "")).toLowerCase().indexOf(query) >= 0;
         children.push(
           svgEl("g", {
             key: "n-" + node.skill.name,
@@ -624,7 +670,7 @@ const PINS_PATH = "/skill-panel/pins";
         if (!data || !data.skills) return [];
         if (!query) return data.skills;
         return data.skills.filter((skill) =>
-          (skill.name + " " + (skill.description || "") + " " + (skill.whenToUse || "")).toLowerCase().indexOf(query) >= 0
+          (skill.name + " " + descOf(skill) + " " + (skill.description || "") + " " + (skill.whenToUse || "")).toLowerCase().indexOf(query) >= 0
         );
       }, [data, query]);
       const groups = useMemo(() => groupSkills(filtered), [filtered]);
@@ -685,7 +731,7 @@ const PINS_PATH = "/skill-panel/pins";
             h("span", { key: "n", className: "skp-selname" }, sel.name),
             h("span", { key: "s", className: "skp-selsrc" }, (picked.cn || picked.key) + " · " + (SOURCE_CN[picked.source] || picked.source)),
           ]),
-          h("p", { key: "d", className: "skp-seldesc" }, sel.description || ""),
+          h("p", { key: "d", className: "skp-seldesc" }, descOf(sel)),
           h("div", { key: "a", className: "skp-selacts" }, [
             h("button", { key: "run", className: "skp-btn skp-primary", type: "button", title: "组合成一轮对话，直接发送", onClick: () => run(sel) }, "执行"),
             h("button", { key: "use", className: "skp-btn", type: "button", title: "只把调用语插进输入框", onClick: () => invoke(sel) }, "插入"),
