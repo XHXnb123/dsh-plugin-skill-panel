@@ -14,6 +14,7 @@ window.__ModuleLoader__.load({
     const LIST_PATH = "/skill-panel/list";
     const REFRESH_PATH = "/skill-panel/refresh";
     const READ_PATH = "/skill-panel/read";
+const PINS_PATH = "/skill-panel/pins";
 
     // 星图配色：金 / 象牙 / 青 —— 三簇各自一色，和面板的深墨蓝底拉开层次
     const SOURCE_COLORS = {
@@ -180,20 +181,30 @@ window.__ModuleLoader__.load({
 .skp-selacts { display: flex; gap: 6px; margin-top: 8px; }
 .skp-hint { color: #7A7261; font-size: 11.5px; letter-spacing: .1em; text-align: center; }
 
-.skp-toast { position: fixed; right: 20px; bottom: 168px; background: #0E1725; border: 1px solid rgba(201,162,39,.45); color: #EDE6D4; padding: 7px 12px; border-radius: 8px; font-size: 12px; z-index: 2147483602; pointer-events: none; }
+/* 常驻：节点外圈一道虚线环，选中卡片里的按钮高亮 */
+.skp-pinring { fill: none; stroke: #E8E2D0; stroke-width: .9; stroke-dasharray: 2 2.4; opacity: .85; }
+.skp-btn.pin-on { border-color: rgba(232,226,208,.85); color: #F3EEDC; background: rgba(232,226,208,.12); }
+.skp-pincount { font-family: ui-monospace, Consolas, monospace; font-size: 10px; letter-spacing: .12em; color: #E8E2D0; opacity: .8; margin-left: 6px; }
+
+.skp-toast { position: fixed; right: 20px; bottom: 96px; background: #0E1725; border: 1px solid rgba(201,162,39,.45); color: #EDE6D4; padding: 7px 12px; border-radius: 8px; font-size: 12px; z-index: 2147483602; pointer-events: none; }
 .skp-preview { white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.55; background: rgba(0,0,0,.35); border: 1px solid rgba(201,162,39,.22); border-radius: 8px; padding: 10px; margin: 6px 12px 12px; overflow: auto; flex: 1 1 auto; color: #D8D2C0; }
 .skp-previewbar { display: flex; align-items: center; gap: 8px; padding: 6px 14px 0; font-size: 11px; color: #9A8F6E; }
 .skp-empty { padding: 28px 14px; text-align: center; color: #7E7663; font-size: 12px; }
 `;
 
-    function fetchJson(path, method) {
-      return fetch(path, { method: method || "GET", cache: "no-store" }).then((r) =>
-        r.json().then((body) => {
-          if (!r.ok || (body && body.ok === false)) {
-            const message = (body && body.error && body.error.message) || "HTTP " + r.status;
+    function fetchJson(path, method, body) {
+      const init = { method: method || "GET", cache: "no-store" };
+      if (body !== undefined) {
+        init.headers = { "content-type": "application/json" };
+        init.body = JSON.stringify(body);
+      }
+      return fetch(path, init).then((r) =>
+        r.json().then((res) => {
+          if (!r.ok || (res && res.ok === false)) {
+            const message = (res && res.error && res.error.message) || "HTTP " + r.status;
             throw new Error(message);
           }
-          return body;
+          return res;
         })
       );
     }
@@ -316,7 +327,8 @@ window.__ModuleLoader__.load({
     const svgEl = (tag, props, children) => h(tag, props, children);
 
     /** 星盘本体：同心刻度环 + 十字准线 + 三条弧 + 19 个节点。 */
-    function StarMap({ nodes, groups, picked, query, onPick }) {
+    function StarMap({ nodes, groups, picked, query, onPick, pins }) {
+      const pinned = new Set(pins || []);
       const children = [];
       const key = (s) => "k" + s;
 
@@ -406,6 +418,9 @@ window.__ModuleLoader__.load({
             style: { opacity: matched ? 1 : 0.15 },
           }, [
             svgEl("circle", { key: "g", className: "glow", cx: node.x, cy: node.y, r: 11, fill: color, filter: "url(#skpSoft)" }),
+            pinned.has(node.skill.name)
+              ? svgEl("circle", { key: "p", className: "skp-pinring", cx: node.x, cy: node.y, r: 8.4 })
+              : null,
             svgEl("circle", { key: "r", className: "ring", cx: node.x, cy: node.y, r: 5.4, stroke: color }),
             svgEl("circle", { key: "d", className: "dot", cx: node.x, cy: node.y, r: 2.7, fill: color }),
           ])
@@ -445,6 +460,8 @@ window.__ModuleLoader__.load({
       const [toast, setToast] = useState("");
       const [picked, setPicked] = useState(null);
       const [cat, setCat] = useState(null);
+      const [pins, setPins] = useState([]);
+      const [pinBusy, setPinBusy] = useState(false);
       const rootRef = useRef(null);
       const toastTimer = useRef(null);
 
@@ -468,8 +485,15 @@ window.__ModuleLoader__.load({
           });
       }
 
+      function loadPins() {
+        fetchJson(PINS_PATH)
+          .then((res) => setPins(Array.isArray(res.pins) ? res.pins : []))
+          .catch(() => setPins([]));
+      }
+
       useEffect(() => {
         load(false);
+        loadPins();
         return () => {
           if (toastTimer.current) clearTimeout(toastTimer.current);
         };
@@ -556,6 +580,24 @@ window.__ModuleLoader__.load({
           .catch((err) => setPreview({ name: skill.name, loading: false, content: "", error: String(err && err.message ? err.message : err) }));
       }
 
+      /** 常驻：写进 ~/.dsh/AGENTS.md 的受管区块，新会话第一次请求就会被读到。 */
+      function togglePin(skill) {
+        if (pinBusy) return;
+        const on = pins.indexOf(skill.name) >= 0;
+        const next = on ? pins.filter((name) => name !== skill.name) : pins.concat(skill.name);
+        setPinBusy(true);
+        fetchJson(PINS_PATH, "POST", { pins: next })
+          .then((res) => {
+            setPins(Array.isArray(res.pins) ? res.pins : next);
+            setPinBusy(false);
+            showToast(on ? "已取消常驻：" + skill.name : "已常驻：" + skill.name + "（新会话生效）");
+          })
+          .catch((err) => {
+            setPinBusy(false);
+            showToast("常驻失败：" + String(err && err.message ? err.message : err));
+          });
+      }
+
       const total = data && data.skills ? data.skills.length : 0;
       const query = (filter || "").trim().toLowerCase();
       const filtered = useMemo(() => {
@@ -571,6 +613,7 @@ window.__ModuleLoader__.load({
         [groups, cat]
       );
       const nodes = useMemo(() => layoutNodes(shownGroups), [shownGroups]);
+      const pinned = useMemo(() => new Set(pins), [pins]);
 
       const children = [
         h("style", { key: "style" }, CSS),
@@ -609,7 +652,7 @@ window.__ModuleLoader__.load({
           bodyChildren.push(h("div", { key: "nomatch", className: "skp-empty" }, "没有匹配的 skill"));
         } else {
           bodyChildren.push(h("div", { key: "map", className: "skp-mapwrap" },
-            h(StarMap, { nodes, groups: shownGroups, picked, query, onPick: (node) => {
+            h(StarMap, { nodes, groups: shownGroups, picked, query, pins, onPick: (node) => {
               setPicked((prev) => (prev && prev.name === node.skill.name ? null : node));
             } })
           ));
@@ -627,10 +670,18 @@ window.__ModuleLoader__.load({
             h("button", { key: "run", className: "skp-btn skp-primary", type: "button", title: "组合成一轮对话，直接发送", onClick: () => run(sel) }, "执行"),
             h("button", { key: "use", className: "skp-btn", type: "button", title: "只把调用语插进输入框", onClick: () => invoke(sel) }, "插入"),
             h("button", { key: "look", className: "skp-btn", type: "button", onClick: () => look(sel) }, "看"),
+            h("button", {
+              key: "pin",
+              className: "skp-btn" + (pinned.has(sel.name) ? " pin-on" : ""),
+              type: "button",
+              disabled: pinBusy,
+              title: "常驻：写进 ~/.dsh/AGENTS.md，新开对话时模型自己就会想起它",
+              onClick: () => togglePin(sel),
+            }, pinned.has(sel.name) ? "已常驻" : "常驻"),
             h("button", { key: "clr", className: "skp-btn", type: "button", onClick: () => setPicked(null) }, "取消"),
           ]),
         ] : [
-          h("div", { key: "hint", className: "skp-hint" }, "六段弧 = 六个分类 · 点节点选中 · 悬停看名字"),
+          h("div", { key: "hint", className: "skp-hint" }, "六段弧 = 六个分类 · 点节点选中 · 常驻 = 写进 AGENTS.md 让模型默认记着"),
         ]));
 
         children.push(h("div", { key: "panel", className: "skp-panel" }, [
@@ -638,6 +689,7 @@ window.__ModuleLoader__.load({
             h("div", { key: "title", className: "skp-title" }, [
               "SKILL ATLAS ",
               h("span", { key: "c", className: "skp-count" }, "· " + filtered.length + "/" + total),
+              pinned.size ? h("span", { key: "pc", className: "skp-pincount" }, "常驻 " + pinned.size) : null,
             ]),
             h("button", { key: "refresh", className: "skp-btn", type: "button", onClick: () => { setPreview(null); setPicked(null); load(true); } }, "刷新"),
             h("button", { key: "close", className: "skp-btn", type: "button", onClick: () => { setOpen(false); setPreview(null); setPicked(null); } }, "×"),

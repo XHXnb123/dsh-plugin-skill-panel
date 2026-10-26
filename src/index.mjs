@@ -4,6 +4,7 @@
 // 数据来源见 scan.mjs：项目 .dsh/skills、用户 ~/.dsh/skills、~/.agents/skills、随包内置 office skills。
 
 import fs from "node:fs";
+import { readState, writePins } from "./pins.mjs";
 import { buildRoots, scanRoots } from "./scan.mjs";
 
 export const name = "dsh-plugin-skill-panel";
@@ -14,6 +15,28 @@ const MAX_READ_BYTES = 512 * 1024;
 function json(res, status, body) {
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
   res.end(JSON.stringify(body));
+}
+
+function readBody(req, limit) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on("data", (chunk) => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(new Error(`请求体过大（上限 ${limit} 字节）`));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    req.on("error", reject);
+  });
+}
+
+function fail(res, error) {
+  json(res, 500, { ok: false, error: { message: String(error && error.message ? error.message : error) } });
 }
 
 export function apply(ctx) {
@@ -108,6 +131,47 @@ export function apply(ctx) {
         } catch (error) {
           json(res, 500, { ok: false, error: { message: String(error && error.message ? error.message : error) } });
         }
+      },
+    },
+    {
+      // 常驻技能：写入 ~/.dsh/AGENTS.md 的受管区块，新会话第一次请求即生效
+      path: "/skill-panel/pins",
+      handler: (req, res) => {
+        if ((req.method || "GET").toUpperCase() !== "POST") {
+          try {
+            json(res, 200, { ok: true, ...readState() });
+          } catch (error) {
+            fail(res, error);
+          }
+          return;
+        }
+        readBody(req, 128 * 1024)
+          .then((text) => {
+            let body = {};
+            try {
+              body = JSON.parse(text || "{}");
+            } catch {
+              json(res, 400, { ok: false, error: { message: "请求体不是合法 JSON" } });
+              return;
+            }
+            const snap = snapshot(false);
+            const known = new Set(snap.skills.map((skill) => skill.name));
+            const requested = Array.isArray(body.pins) ? body.pins : [];
+            const clean = [];
+            const unknown = [];
+            for (const item of requested) {
+              const name = String(item || "").trim();
+              if (!name) continue;
+              if (!known.has(name)) {
+                unknown.push(name);
+                continue;
+              }
+              if (!clean.includes(name)) clean.push(name);
+            }
+            const written = writePins(clean, snap.skills);
+            json(res, 200, { ok: true, ...written, unknown });
+          })
+          .catch((error) => fail(res, error));
       },
     },
     {

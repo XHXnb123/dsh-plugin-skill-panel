@@ -1,6 +1,6 @@
 # dsh-plugin-skill-panel
 
-给 DeepSeek Harness 的 Web GUI 加一颗「🧩 Skills」胶囊：点开是一张**星图**，本机全部 skill 是盘上的星点，按用途分成六段弧线。点一颗星就能看它的描述、把调用语塞进输入框，或者直接发出去。
+给 DeepSeek Harness 的 Web GUI 加一颗「🧩 Skills」胶囊：点开是一张**星图**，本机全部 skill 是盘上的星点，按用途分成六段弧线。点一颗星就能看它的描述、把调用语塞进输入框，或者直接发出去；常用的还能设成**常驻**，以后新开的对话里模型自己就记着，不用每次点名。
 
 ![星图面板](docs/preview.png)
 
@@ -16,19 +16,48 @@
 
 ![选中一颗星](docs/preview-picked.png)
 
-点中一颗星后，底部换成它的信息条：名字、来源、两行描述，以及「执行 / 插入 / 看 / 取消」。被选中的星会持续发光，它所在的弧线也会提亮。
+点中一颗星后，底部换成它的信息条：名字、来源、两行描述，以及「执行 / 插入 / 看 / 常驻 / 取消」。被选中的星会持续发光，它所在的弧线也会提亮。
 
-## 三个按钮
+## 四个按钮
 
 | 按钮 | 行为 |
 | --- | --- |
 | **执行** | 把 `使用 skill \`<名字>\` 完成任务：<输入框里已有的话>` 组合成一轮对话，**直接发送**。输入框为空时退化为"只插入前缀"；只有前缀没有需求时提示先补需求，不会发半截话。 |
 | **插入** | 只写进输入框，你自己补需求再回车。 |
 | **看** | 直接预览该 skill 的 `SKILL.md` 正文。 |
+| **常驻** | 把它写进 `~/.dsh/AGENTS.md`，以后**新开的对话**里模型默认就知道它、遇到相关任务自己会去加载，不用你每次点名。再点一次取消。 |
 | **取消** | 取消选中，回到提示态。 |
 
 
 调用语已经存在时（比如你刚点了另一个 skill 的执行），只替换前面的 skill 名，不会把前缀越叠越长。
+
+## 常驻：不必每次手动调用
+
+有些 skill 你希望它一直在——比如「中文写作要自然」或者「删 AI 味」。把它们设成常驻即可。
+
+点中星点 → 「常驻」，插件会往 `~/.dsh/AGENTS.md` 写一段受管区块：
+
+```markdown
+<!-- skill-panel:begin -->
+## 常驻技能（由 dsh-plugin-skill-panel 维护，勿手动编辑本区块）
+
+下列技能默认启用：遇到相关任务时先调用 `skill` 工具加载对应技能，再按它的指引执行，不需要等用户点名。
+
+- `natural-chinese`：Use this skill whenever generating or rewriting Chinese text …
+- `humanizer-yu`：去除中文文本中的 AI 生成痕迹——西化句式、翻译腔 …
+<!-- skill-panel:end -->
+```
+
+为什么写这里：DeepSeek Harness 自带 `dsh-agent-instructions`，每个会话第一次请求会把用户全局 `~/.dsh/AGENTS.md` 作为工作区指引注入（65KB 预算，由 `dsh-base` 开启）。所以写进去的技能是**真常驻**，不依赖这个插件在会话里做手脚。
+
+几条行为约定：
+
+- 只写技能名 + 一行描述 + 何时用，**不塞** `SKILL.md` 全文——模型看到指引后会用 `skill` 工具自己取正文，省 token。
+- 区块用 `<!-- skill-panel:begin -->` / `<!-- skill-panel:end -->` 包围：你自己的 AGENTS.md 内容原样保留，插件只替换这两个标记之间的部分。
+- 取消全部常驻后，区块整块消失；如果文件因此变空，文件也会被删掉。
+- 生效时机是**新会话的第一次请求**——当前对话的指引基线已经注入过了，不会中途变化。
+
+状态存在 `~/.dsh/skill-panel/pins.json`，删掉它等于清空常驻（AGENTS.md 里的区块要再点一次「常驻」触发重写，或手动删掉那两个注释标记之间的内容）。
 
 ## 安装 / 卸载
 
@@ -46,13 +75,17 @@
 
 | 文件 | 作用 |
 | --- | --- |
-| `src/index.mjs` | 宿主半身：`apply(ctx)` 里向 `webServer` 注册 4 条 JSON 路由 |
+| `src/index.mjs` | 宿主半身：`apply(ctx)` 里向 `webServer` 注册 5 条 JSON 路由 |
 | `src/scan.mjs` | 扫描器：发现 skill 根目录、解析 frontmatter、去重合并 |
+| `src/pins.mjs` | 常驻：读写 `~/.dsh/skill-panel/pins.json`，重建 `~/.dsh/AGENTS.md` 的受管区块 |
 | `src/client.js` | 客户端半身：React 组件挂在 `shell.overlay` slot 上，盘面是手写 SVG |
 | `cordis.patch.yml` | 插件自带的 patch，声明 `- id: skill-panel` 插入条目 |
 | `smoke.mjs` | 宿主侧冒烟测试（mock ctx 调 apply，验证路由与数据） |
-| `verify-starmap.py` | 用 playwright 在 web profile 实例里验证星图：节点数、弧数、选中卡片、插入输入框、搜索、分类筛选 |
+| `test-scan.mjs` | 纯扫描器输出，不需要宿主 |
+| `test-pins.mjs` | 常驻区块的写入 / 合并 / 清空自测（临时 DSH_HOME，不碰真实配置） |
+| `test-routes.mjs` | 起一个临时 http 服务，把 5 条路由真打一遍（含 POST 常驻） |
 | `verify-starmap.py` | playwright 验证星图客户端：节点数、弧数、选中卡片、插入输入框、搜索、分类筛选 |
+| `verify-pins.py` | playwright 验证常驻交互：按钮切换、节点虚线环、标题计数 |
 | `design-demos/` | 视觉探索留下的候选稿：六个列表方向（`dir-1..3` 完整版）与三个星图方向（`g1` 知识图谱 / `g2` 星图 / `g3` 径向树），最终选了 `g2` |
 
 ## 分类怎么定的
@@ -87,6 +120,8 @@
 | GET | `/skill-panel/list` | 全部 skill + roots + errors |
 | POST | `/skill-panel/refresh` | 强制重扫 |
 | GET | `/skill-panel/read?name=<名字>` | 返回该 skill 的 `SKILL.md` 正文（只在扫描结果白名单内读，512KB 上限） |
+| GET | `/skill-panel/pins` | 当前常驻名单 + `AGENTS.md` 路径与字节数 |
+| POST | `/skill-panel/pins` | body `{"pins": ["名字", …]}`，重写 `AGENTS.md` 受管区块；不在扫描结果里的名字会被过滤并在 `unknown` 里返回 |
 | GET | `/skill-panel/health` | 存活探针 + 上次扫描时间 |
 
 ## 排障
@@ -101,5 +136,8 @@
 ```powershell
 node smoke.mjs        # 宿主侧：路由注册、分组、read、路径穿越拦截
 node test-scan.mjs    # 纯扫描器输出（无需宿主）
+node test-pins.mjs    # 常驻区块写入 / 合并 / 清空（临时目录）
+node test-routes.mjs  # 5 条路由真打一遍，含 POST 常驻
 python verify-starmap.py "http://127.0.0.1:<port>/?token=<token>"   # 客户端星图（需 playwright + 一个 web profile 实例）
+python verify-pins.py   "http://127.0.0.1:<port>/?token=<token>"   # 常驻交互
 ```
