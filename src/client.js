@@ -184,6 +184,7 @@ const PINS_PATH = "/skill-panel/pins";
 /* 常驻：节点外圈一道虚线环，选中卡片里的按钮高亮 */
 .skp-pinring { fill: none; stroke: #E8E2D0; stroke-width: .9; stroke-dasharray: 2 2.4; opacity: .85; }
 .skp-btn.pin-on { border-color: rgba(232,226,208,.85); color: #F3EEDC; background: rgba(232,226,208,.12); }
+.skp-btn.pin-off { border-color: rgba(232,226,208,.22); color: #6E695C; cursor: not-allowed; }
 .skp-pincount { font-family: ui-monospace, Consolas, monospace; font-size: 10px; letter-spacing: .12em; color: #E8E2D0; opacity: .8; margin-left: 6px; }
 
 .skp-toast { position: fixed; right: 20px; bottom: 96px; background: #0E1725; border: 1px solid rgba(201,162,39,.45); color: #EDE6D4; padding: 7px 12px; border-radius: 8px; font-size: 12px; z-index: 2147483602; pointer-events: none; }
@@ -198,15 +199,22 @@ const PINS_PATH = "/skill-panel/pins";
         init.headers = { "content-type": "application/json" };
         init.body = JSON.stringify(body);
       }
-      return fetch(path, init).then((r) =>
-        r.json().then((res) => {
-          if (!r.ok || (res && res.ok === false)) {
-            const message = (res && res.error && res.error.message) || "HTTP " + r.status;
-            throw new Error(message);
-          }
-          return res;
-        })
-      );
+      return fetch(path, init).then(async (r) => {
+        const text = await r.text();
+        let res = null;
+        try {
+          res = text ? JSON.parse(text) : null;
+        } catch (e) {
+          res = null;
+        }
+        if (!r.ok || (res && res.ok === false)) {
+          const message = (res && res.error && res.error.message) || "HTTP " + r.status;
+          const error = new Error(message);
+          error.status = r.status;
+          throw error;
+        }
+        return res;
+      });
     }
 
     /** 找到聊天输入框：页面里最靠下的可见编辑区（排除插件面板自己的输入框）。 */
@@ -462,6 +470,7 @@ const PINS_PATH = "/skill-panel/pins";
       const [cat, setCat] = useState(null);
       const [pins, setPins] = useState([]);
       const [pinBusy, setPinBusy] = useState(false);
+      const [pinUnsupported, setPinUnsupported] = useState(false);
       const rootRef = useRef(null);
       const toastTimer = useRef(null);
 
@@ -487,8 +496,15 @@ const PINS_PATH = "/skill-panel/pins";
 
       function loadPins() {
         fetchJson(PINS_PATH)
-          .then((res) => setPins(Array.isArray(res.pins) ? res.pins : []))
-          .catch(() => setPins([]));
+          .then((res) => {
+            setPinUnsupported(false);
+            setPins(Array.isArray(res.pins) ? res.pins : []);
+          })
+          .catch((err) => {
+            setPins([]);
+            // 宿主还是旧代码时这条路由不存在；重启一次 DeepSeek Harness 才会加载
+            if (err && err.status === 404) setPinUnsupported(true);
+          });
       }
 
       useEffect(() => {
@@ -583,6 +599,10 @@ const PINS_PATH = "/skill-panel/pins";
       /** 常驻：写进 ~/.dsh/AGENTS.md 的受管区块，新会话第一次请求就会被读到。 */
       function togglePin(skill) {
         if (pinBusy) return;
+        if (pinUnsupported) {
+          showToast("常驻需要重启一次 DeepSeek Harness 才能用");
+          return;
+        }
         const on = pins.indexOf(skill.name) >= 0;
         const next = on ? pins.filter((name) => name !== skill.name) : pins.concat(skill.name);
         setPinBusy(true);
@@ -672,12 +692,14 @@ const PINS_PATH = "/skill-panel/pins";
             h("button", { key: "look", className: "skp-btn", type: "button", onClick: () => look(sel) }, "看"),
             h("button", {
               key: "pin",
-              className: "skp-btn" + (pinned.has(sel.name) ? " pin-on" : ""),
+              className: "skp-btn" + (pinned.has(sel.name) ? " pin-on" : "") + (pinUnsupported ? " pin-off" : ""),
               type: "button",
               disabled: pinBusy,
-              title: "常驻：写进 ~/.dsh/AGENTS.md，新开对话时模型自己就会想起它",
+              title: pinUnsupported
+                ? "宿主还没加载常驻路由：完全退出 DeepSeek Harness 再打开，这里就能用了"
+                : "常驻：写进 ~/.dsh/AGENTS.md，新开对话时模型自己就会想起它",
               onClick: () => togglePin(sel),
-            }, pinned.has(sel.name) ? "已常驻" : "常驻"),
+            }, pinUnsupported ? "常驻（待重启）" : pinned.has(sel.name) ? "已常驻" : "常驻"),
             h("button", { key: "clr", className: "skp-btn", type: "button", onClick: () => setPicked(null) }, "取消"),
           ]),
         ] : [
