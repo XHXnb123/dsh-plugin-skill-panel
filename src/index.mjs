@@ -40,12 +40,6 @@ function fail(res, error) {
 }
 
 export function apply(ctx) {
-  const webServer = ctx.get("webServer");
-  if (!webServer || typeof webServer.register !== "function") {
-    ctx.logger.warn("skill-panel: webServer 服务不可用，GUI 路由未注册");
-    return;
-  }
-
   const state = { cache: null, at: 0 };
 
   function snapshot(force) {
@@ -188,18 +182,28 @@ export function apply(ctx) {
     },
   ];
 
-  for (const route of routes) {
-    try {
-      webServer.register({ kind: "exact", path: route.path, handler: route.handler });
-    } catch (error) {
-      ctx.logger.warn(`skill-panel: 路由 ${route.path} 注册失败：${String(error && error.message ? error.message : error)}`);
+  // webServer 可能在插件 apply 之后才就绪：用 inject 等依赖到位再注册（0.2.1-rc.3 必须这样）
+  ctx.inject(["webServer"], (webCtx) => {
+    const webServer = webCtx.webServer;
+    if (!webServer || typeof webServer.register !== "function") {
+      ctx.logger.warn("skill-panel: webServer 服务不可用，GUI 路由未注册");
+      return;
     }
-  }
-  ctx.logger.info("skill-panel: 已注册 /skill-panel/* 路由");
+    for (const route of routes) {
+      try {
+        webCtx.effect(
+          () => webServer.register({ kind: "exact", path: route.path, handler: route.handler }),
+          `skill-panel: ${route.path}`
+        );
+      } catch (error) {
+        ctx.logger.warn(`skill-panel: 路由 ${route.path} 注册失败：${String(error && error.message ? error.message : error)}`);
+      }
+    }
+    ctx.logger.info("skill-panel: 已注册 /skill-panel/* 路由");
 
-  ctx.effect(() => () => {
-    state.cache = null;
-  }, "skill-panel cache cleanup");
-
+    webCtx.effect(() => () => {
+      state.cache = null;
+    }, "skill-panel cache cleanup");
+  });
 }
 
